@@ -14,6 +14,8 @@ class _RunSuitePageState extends State<RunSuitePage> {
   final _vm = RunSuiteViewModel();
   final _moduleController = TextEditingController();
   final _extraArgsController = TextEditingController();
+  final _scenesController = TextEditingController();
+  bool _panelCollapsed = false;
 
   @override
   void initState() {
@@ -25,6 +27,7 @@ class _RunSuitePageState extends State<RunSuitePage> {
   void dispose() {
     _moduleController.dispose();
     _extraArgsController.dispose();
+    _scenesController.dispose();
     _scrollController.dispose();
     _vm.dispose();
     super.dispose();
@@ -81,6 +84,7 @@ class _RunSuitePageState extends State<RunSuitePage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // ── Painel esquerdo ──
+        if (!_panelCollapsed)
         SizedBox(
           width: 380,
           child: ListView(
@@ -133,7 +137,39 @@ class _RunSuitePageState extends State<RunSuitePage> {
                   child: Text('Nenhum dispositivo conectado',
                       style: TextStyle(color: Colors.grey)),
                 )
-              else
+              else if (_vm.isCtsVerifier) ...[
+                // ── DUT + Tablet ──
+                DropdownButtonFormField<String>(
+                  initialValue: _vm.dutSerial,
+                  decoration: const InputDecoration(
+                    labelText: 'DUT (Device Under Test)',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.phone_android),
+                  ),
+                  items: _vm.devices
+                      .where((d) => d.isAvailable)
+                      .map((d) => DropdownMenuItem(
+                          value: d.serial, child: Text(d.serial)))
+                      .toList(),
+                  onChanged: _vm.setDutSerial,
+                ),
+                const SizedBox(height: 12),
+                DropdownButtonFormField<String>(
+                  initialValue: _vm.tabletSerial,
+                  decoration: const InputDecoration(
+                    labelText: 'Tablet (Camera ITS)',
+                    border: OutlineInputBorder(),
+                    prefixIcon: Icon(Icons.tablet_android),
+                  ),
+                  items: _vm.devices
+                      .where((d) =>
+                          d.isAvailable && d.serial != _vm.dutSerial)
+                      .map((d) => DropdownMenuItem(
+                          value: d.serial, child: Text(d.serial)))
+                      .toList(),
+                  onChanged: _vm.setTabletSerial,
+                ),
+              ] else
                 ..._vm.devices.asMap().entries.map((entry) {
                   final i = entry.key;
                   final d = entry.value;
@@ -154,6 +190,7 @@ class _RunSuitePageState extends State<RunSuitePage> {
                 }),
               const Divider(height: 32),
               // ── Modo de execução ──
+              if (!_vm.isCtsVerifier) ...[
               _sectionTitle('Modo de Execução'),
               const SizedBox(height: 8),
               RadioGroup<RunMode>(
@@ -228,6 +265,106 @@ class _RunSuitePageState extends State<RunSuitePage> {
                     onChanged: _vm.setSelectedSubplan,
                   ),
               ],
+              ], // fim do !isCtsVerifier
+              if (_vm.isCtsVerifier) ...[
+                _sectionTitle('Ação'),
+                const SizedBox(height: 8),
+                RadioGroup<VerifierAction>(
+                  groupValue: _vm.verifierAction,
+                  onChanged: (v) {
+                    if (v != null) _vm.setVerifierAction(v);
+                  },
+                  child: Column(
+                    children: [
+                      _verifierActionRadio(
+                        VerifierAction.installApks,
+                        'Instalar APKs',
+                        Icons.install_mobile,
+                        'Instala todos os APKs do CTS Verifier',
+                      ),
+                      _verifierActionRadio(
+                        VerifierAction.cameraIts,
+                        'Camera ITS',
+                        Icons.camera_alt,
+                        'Executa os testes Camera ITS',
+                      ),
+                      _verifierActionRadio(
+                        VerifierAction.cameraWebcamTest,
+                        'Camera Webcam Test',
+                        Icons.videocam,
+                        'Executa o CameraWebcamTest',
+                      ),
+                    ],
+                  ),
+                ),
+                if (_vm.verifierAction == VerifierAction.cameraIts ||
+                    _vm.verifierAction == VerifierAction.cameraWebcamTest) ...[
+                  const Divider(height: 24),
+                  _sectionTitle('Python Venv'),
+                  const SizedBox(height: 8),
+                  if (_vm.venvs.isEmpty)
+                    const Padding(
+                      padding: EdgeInsets.all(12),
+                      child: Text(
+                        'Nenhuma venv configurada.\n'
+                        'Adicione em Configurações.',
+                        style: TextStyle(color: Colors.orange, fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                    )
+                  else
+                    DropdownButtonFormField<int>(
+                      initialValue: _vm.selectedVenvIndex,
+                      decoration: const InputDecoration(
+                        labelText: 'Virtual Environment',
+                        border: OutlineInputBorder(),
+                        prefixIcon: Icon(Icons.terminal),
+                      ),
+                      items: _vm.venvs.asMap().entries.map((e) {
+                        final v = e.value;
+                        return DropdownMenuItem(
+                          value: e.key,
+                          child: Text(
+                            v.name.isNotEmpty ? v.name : v.path,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: _vm.setSelectedVenv,
+                    ),
+                ],
+                if (_vm.verifierAction == VerifierAction.cameraIts) ...[
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _vm.cameraId,
+                    decoration: const InputDecoration(
+                      labelText: 'Camera',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.camera_alt),
+                    ),
+                    items: const [
+                      DropdownMenuItem(value: '0', child: Text('0')),
+                      DropdownMenuItem(value: '0.3', child: Text('0.3')),
+                      DropdownMenuItem(value: '0.5', child: Text('0.5')),
+                      DropdownMenuItem(value: '1', child: Text('1')),
+                    ],
+                    onChanged: (v) {
+                      if (v != null) _vm.setCameraId(v);
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _scenesController,
+                    decoration: const InputDecoration(
+                      labelText: 'Scenes (opcional)',
+                      border: OutlineInputBorder(),
+                      hintText: 'ex: scene1,scene0',
+                      prefixIcon: Icon(Icons.photo_library),
+                    ),
+                  ),
+                ],
+              ],
+              if (!_vm.isCtsVerifier) ...[
               const Divider(height: 32),
               // ── Opções extras ──
               _sectionTitle('Opções Avançadas'),
@@ -249,6 +386,7 @@ class _RunSuitePageState extends State<RunSuitePage> {
                   hintText: 'ex: --skip-preconditions',
                 ),
               ),
+              ],
               const SizedBox(height: 24),
               // ── Botão Executar ──
               SizedBox(
@@ -258,6 +396,7 @@ class _RunSuitePageState extends State<RunSuitePage> {
                       ? () => _vm.startRun(
                             module: _moduleController.text,
                             extraArgs: _extraArgsController.text,
+                            scenes: _scenesController.text,
                           )
                       : null,
                   icon: _vm.running
@@ -266,9 +405,16 @@ class _RunSuitePageState extends State<RunSuitePage> {
                           height: 20,
                           child: CircularProgressIndicator(strokeWidth: 2),
                         )
-                      : const Icon(Icons.rocket_launch),
-                  label: Text(
-                      _vm.running ? 'Executando...' : 'Iniciar Execução'),
+                      : Icon(_vm.isCtsVerifier
+                          ? _verifierActionIcon(_vm.verifierAction)
+                          : Icons.rocket_launch),
+                  label: Text(_vm.running
+                      ? (_vm.isCtsVerifier
+                          ? _verifierRunningLabel(_vm.verifierAction)
+                          : 'Executando...')
+                      : (_vm.isCtsVerifier
+                          ? _verifierActionLabel(_vm.verifierAction)
+                          : 'Iniciar Execução')),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Colors.blueGrey,
                     foregroundColor: Colors.white,
@@ -278,7 +424,7 @@ class _RunSuitePageState extends State<RunSuitePage> {
             ],
           ),
         ),
-        const VerticalDivider(width: 1),
+        if (!_panelCollapsed) const VerticalDivider(width: 1),
         // ── Painel direito: saída ──
         Expanded(child: _buildOutputPanel()),
       ],
@@ -323,6 +469,17 @@ class _RunSuitePageState extends State<RunSuitePage> {
           padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
           child: Row(
             children: [
+              IconButton(
+                icon: Icon(_panelCollapsed
+                    ? Icons.chevron_right
+                    : Icons.chevron_left),
+                tooltip: _panelCollapsed
+                    ? 'Mostrar painel'
+                    : 'Expandir terminal',
+                onPressed: () => setState(() {
+                  _panelCollapsed = !_panelCollapsed;
+                }),
+              ),
               _sectionTitle('Saída'),
               if (_vm.running) ...[
                 const SizedBox(width: 12),
@@ -350,11 +507,14 @@ class _RunSuitePageState extends State<RunSuitePage> {
         ),
         Expanded(
           child: Container(
-            margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+            margin: const EdgeInsets.fromLTRB(16, 0, 0, 16),
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               color: Colors.grey.shade900,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(8),
+                bottomLeft: Radius.circular(8),
+              ),
             ),
             child: SingleChildScrollView(
               controller: _scrollController,
@@ -401,6 +561,7 @@ class _RunSuitePageState extends State<RunSuitePage> {
       'CTS' => Icons.verified,
       'VTS' => Icons.memory,
       'GTS' => Icons.play_circle,
+      'CTS VERIFIER' => Icons.checklist,
       _ => Icons.science,
     };
   }
@@ -410,7 +571,48 @@ class _RunSuitePageState extends State<RunSuitePage> {
       'CTS' => Colors.blue,
       'VTS' => Colors.deepPurple,
       'GTS' => Colors.teal,
+      'CTS VERIFIER' => Colors.orange,
       _ => Colors.grey,
+    };
+  }
+
+  Widget _verifierActionRadio(
+      VerifierAction action, String label, IconData icon, String desc) {
+    return ListTile(
+      leading: Radio<VerifierAction>(value: action),
+      title: Row(
+        children: [
+          Icon(icon, size: 20),
+          const SizedBox(width: 8),
+          Text(label),
+        ],
+      ),
+      subtitle: Text(desc, style: const TextStyle(fontSize: 12)),
+      onTap: () => _vm.setVerifierAction(action),
+    );
+  }
+
+  IconData _verifierActionIcon(VerifierAction action) {
+    return switch (action) {
+      VerifierAction.installApks => Icons.install_mobile,
+      VerifierAction.cameraIts => Icons.camera_alt,
+      VerifierAction.cameraWebcamTest => Icons.videocam,
+    };
+  }
+
+  String _verifierActionLabel(VerifierAction action) {
+    return switch (action) {
+      VerifierAction.installApks => 'Instalar APKs',
+      VerifierAction.cameraIts => 'Rodar Camera ITS',
+      VerifierAction.cameraWebcamTest => 'Rodar Webcam Test',
+    };
+  }
+
+  String _verifierRunningLabel(VerifierAction action) {
+    return switch (action) {
+      VerifierAction.installApks => 'Instalando...',
+      VerifierAction.cameraIts => 'Rodando Camera ITS...',
+      VerifierAction.cameraWebcamTest => 'Rodando Webcam Test...',
     };
   }
 }

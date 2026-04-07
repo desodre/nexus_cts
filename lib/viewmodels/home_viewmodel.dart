@@ -1,19 +1,24 @@
 import 'package:flutter/foundation.dart';
 import 'package:nexus_cts/models/adb_device.dart';
+import 'package:nexus_cts/models/camera_its_result.dart';
 import 'package:nexus_cts/models/suite_entry.dart';
 import 'package:nexus_cts/models/test_result.dart';
 import 'package:nexus_cts/services/adb_service.dart';
+import 'package:nexus_cts/services/camera_its_result_service.dart';
 import 'package:nexus_cts/services/suite_result_service.dart';
 
 class HomeViewModel extends ChangeNotifier {
   final AdbService _adbService;
   final SuiteResultService _resultService;
+  final CameraItsResultService _itsResultService;
 
   HomeViewModel({
     AdbService? adbService,
     SuiteResultService? resultService,
+    CameraItsResultService? itsResultService,
   })  : _adbService = adbService ?? AdbService(),
-        _resultService = resultService ?? SuiteResultService();
+        _resultService = resultService ?? SuiteResultService(),
+        _itsResultService = itsResultService ?? CameraItsResultService();
 
   // ── Devices ──
   List<AdbDevice> _devices = [];
@@ -38,9 +43,27 @@ class HomeViewModel extends ChangeNotifier {
   bool _noSuiteConfigured = false;
   bool get noSuiteConfigured => _noSuiteConfigured;
 
+  // ── Camera ITS ──
+  List<CameraItsResult> _itsResults = [];
+  List<CameraItsResult> get itsResults => _itsResults;
+
+  bool _loadingItsResults = false;
+  bool get loadingItsResults => _loadingItsResults;
+
   void init() {
     fetchDevices();
     fetchResults();
+    fetchItsResults();
+  }
+
+  Future<void> fetchItsResults() async {
+    _loadingItsResults = true;
+    notifyListeners();
+
+    _itsResults = await _itsResultService.fetchResults();
+
+    _loadingItsResults = false;
+    notifyListeners();
   }
 
   Future<void> fetchDevices() async {
@@ -86,7 +109,7 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   List<String> get orderedGroupKeys {
-    const typeOrder = ['CTS', 'VTS', 'GTS'];
+    const typeOrder = ['CTS', 'VTS', 'GTS', 'CTS Verifier'];
     return _groupedResults.keys.toList()
       ..sort((a, b) {
         final ta = _groupedResults[a]!.first.suiteType;

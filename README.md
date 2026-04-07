@@ -167,8 +167,8 @@ O app constrói automaticamente: `{caminho}/tools/{tipo-lowercase}-tradefed`
 | 🔄 Retry Automático | Alta | ☐ | Re-execução automática de módulos falhados com backoff exponencial |
 | 📊 Gráfico de Histórico | Alta | ☐ | Timeline de taxa de aprovação ao longo do tempo por suite |
 | 📈 Comparação de Execuções | Alta | ☐ | Diff entre duas execuções (módulos novos/removidos/regressões) |
-| ✅ CTS Verifier Results | Alta | ☐ | Parse e display de relatórios do CTS Verifier (testes manuais) |
-| 📷 Camera ITS Execution | Alta | ☐ | Suporte para executar Camera ITS com automação de testes ópticos |
+| ✅ CTS Verifier Results | Alta | ✅ | Parse e display de relatórios do CTS Verifier (testes manuais) |
+| 📷 Camera ITS Execution | Alta | ✅ | Suporte para executar Camera ITS com automação de testes ópticos |
 | 🔔 Notificações | Média | ☐ | Desktop notifications ao completar testes (sucesso/falha) |
 | 📥 Export de Resultados | Média | ☐ | Gerar PDF/CSV com summary, detalhes por módulo, gráficos |
 | 🌙 Tema Escuro | Média | ☐ | Suporte a modo dark com persistência de preferência |

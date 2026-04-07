@@ -70,7 +70,7 @@ class AppDrawer extends StatelessWidget {
           const Padding(
             padding: EdgeInsets.all(16),
             child: Text(
-              'nexus_cts v0.1.0',
+              'nexus_cts v0.3.1',
               style: TextStyle(color: Colors.grey, fontSize: 12),
             ),
           ),

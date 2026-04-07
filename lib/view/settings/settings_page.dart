@@ -1,5 +1,8 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:nexus_cts/models/suite_entry.dart';
+import 'package:nexus_cts/models/venv_entry.dart';
 import 'package:nexus_cts/viewmodels/settings_viewmodel.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -94,6 +97,43 @@ class _SettingsPageState extends State<SettingsPage> {
                 value: _vm.rebootOnFail,
                 onChanged: _vm.setRebootOnFail,
               ),
+              const Divider(height: 32),
+              Row(
+                children: [
+                  const Text(
+                    'Python Virtual Environments',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const Spacer(),
+                  FilledButton.icon(
+                    onPressed: _vm.addVenv,
+                    icon: const Icon(Icons.add),
+                    label: const Text('Adicionar Venv'),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Ambientes virtuais Python para execução do Camera ITS.',
+                style: TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              if (_vm.venvs.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24),
+                  child: Center(
+                    child: Text(
+                      'Nenhuma venv configurada.\nClique em "Adicionar Venv" para começar.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ),
+                )
+              else
+                ..._vm.venvs.asMap().entries.map((entry) {
+                  return _buildVenvCard(entry.key, entry.value);
+                }),
             ],
           ),
         );
@@ -129,8 +169,9 @@ class _SettingsPageState extends State<SettingsPage> {
               ],
             ),
             const SizedBox(height: 8),
-            TextField(
-              controller: TextEditingController(text: suite.name),
+            TextFormField(
+              key: ValueKey('suite_name_$index'),
+              initialValue: suite.name,
               decoration: const InputDecoration(
                 labelText: 'Apelido da Suíte',
                 border: OutlineInputBorder(),
@@ -157,8 +198,9 @@ class _SettingsPageState extends State<SettingsPage> {
               },
             ),
             const SizedBox(height: 10),
-            TextField(
-              controller: TextEditingController(text: suite.path),
+            TextFormField(
+              key: ValueKey('suite_path_$index'),
+              initialValue: suite.path,
               decoration: const InputDecoration(
                 labelText: 'Caminho da Suíte',
                 border: OutlineInputBorder(),
@@ -171,5 +213,96 @@ class _SettingsPageState extends State<SettingsPage> {
         ),
       ),
     );
+  }
+
+  Widget _buildVenvCard(int index, VenvEntry venv) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.terminal, color: Colors.green),
+                const SizedBox(width: 8),
+                Text(
+                  venv.name.isNotEmpty
+                      ? venv.name
+                      : 'Venv #${index + 1}',
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold, fontSize: 15),
+                ),
+                const Spacer(),
+                IconButton(
+                  icon: const Icon(Icons.terminal, color: Colors.green),
+                  tooltip: 'Abrir terminal com venv',
+                  onPressed: venv.path.isEmpty
+                      ? null
+                      : () => _openVenvTerminal(venv),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  tooltip: 'Remover venv',
+                  onPressed: () => _vm.removeVenv(index),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+            TextFormField(
+              key: ValueKey('venv_name_$index'),
+              initialValue: venv.name,
+              decoration: const InputDecoration(
+                labelText: 'Apelido da Venv',
+                border: OutlineInputBorder(),
+                hintText: 'ex: its_py311, camera_its',
+                prefixIcon: Icon(Icons.label),
+              ),
+              onChanged: (v) => _vm.updateVenvName(index, v),
+            ),
+            const SizedBox(height: 10),
+            TextFormField(
+              key: ValueKey('venv_path_$index'),
+              initialValue: venv.path,
+              decoration: const InputDecoration(
+                labelText: 'Caminho da Venv',
+                border: OutlineInputBorder(),
+                hintText: 'ex: /home/user/.venvs/its',
+                prefixIcon: Icon(Icons.folder),
+              ),
+              onChanged: (v) => _vm.updateVenvPath(index, v),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _openVenvTerminal(VenvEntry venv) async {
+    final activatePath = '${venv.normalizedPath}/bin/activate';
+    try {
+      await Process.start(
+        'x-terminal-emulator',
+        ['-e', 'bash', '-c', 'source $activatePath && exec bash'],
+        mode: ProcessStartMode.detached,
+      );
+    } catch (_) {
+      try {
+        await Process.start(
+          'gnome-terminal',
+          ['--', 'bash', '-c', 'source $activatePath && exec bash'],
+          mode: ProcessStartMode.detached,
+        );
+      } catch (_) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Não foi possível abrir o terminal.'),
+            ),
+          );
+        }
+      }
+    }
   }
 }

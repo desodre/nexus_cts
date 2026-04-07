@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart';
 import 'package:nexus_cts/models/adb_device.dart';
 import 'package:nexus_cts/models/run_mode.dart';
 import 'package:nexus_cts/models/suite_entry.dart';
+import 'package:nexus_cts/models/venv_entry.dart';
 import 'package:nexus_cts/services/adb_service.dart';
 import 'package:nexus_cts/services/suite_result_service.dart';
 import 'package:nexus_cts/services/suite_runner_service.dart';
@@ -67,10 +68,43 @@ class RunSuiteViewModel extends ChangeNotifier {
       _outputBuffer.isEmpty ? null : _outputBuffer.toString();
 
   Process? _activeProcess;
+  bool _cancelled = false;
+
+  // ── CTS Verifier ──
+  VerifierAction _verifierAction = VerifierAction.installApks;
+  VerifierAction get verifierAction => _verifierAction;
+
+  String? _dutSerial;
+  String? get dutSerial => _dutSerial;
+
+  String? _tabletSerial;
+  String? get tabletSerial => _tabletSerial;
+
+  List<VenvEntry> _venvs = [];
+  List<VenvEntry> get venvs => _venvs;
+
+  String _cameraId = '0';
+  String get cameraId => _cameraId;
+
+  int? _selectedVenvIndex;
+  int? get selectedVenvIndex => _selectedVenvIndex;
+  VenvEntry? get selectedVenv =>
+      _selectedVenvIndex != null ? _venvs[_selectedVenvIndex!] : null;
 
   // ── Computed ──
+  bool get isCtsVerifier => selectedSuite?.type == 'CTS Verifier';
+
   bool get canRun {
     if (_selectedSuiteIndex == null) return false;
+    if (isCtsVerifier) {
+      if (_dutSerial == null) return false;
+      if (_verifierAction == VerifierAction.cameraIts ||
+          _verifierAction == VerifierAction.cameraWebcamTest) {
+        if (_tabletSerial == null) return false;
+        if (_selectedVenvIndex == null) return false;
+      }
+      return true;
+    }
     final hasDevice = _devices.any((d) => d.selected && d.isAvailable);
     if (!hasDevice) return false;
     if (_runMode == RunMode.subplan && _selectedSubplan == null) return false;
@@ -82,6 +116,12 @@ class RunSuiteViewModel extends ChangeNotifier {
   void init() {
     loadSuites();
     fetchDevices();
+    _loadVenvs();
+  }
+
+  Future<void> _loadVenvs() async {
+    _venvs = await VenvStorage.load();
+    notifyListeners();
   }
 
   Future<void> loadSuites() async {
@@ -110,6 +150,15 @@ class RunSuiteViewModel extends ChangeNotifier {
     _selectedSuiteIndex = index;
     _selectedResult = null;
     _selectedSubplan = null;
+    _dutSerial = null;
+    _tabletSerial = null;
+    _selectedVenvIndex = null;
+    if (_suites[index].type == 'CTS Verifier') {
+      _runMode = RunMode.install;
+      _verifierAction = VerifierAction.installApks;
+    } else if (_runMode == RunMode.install) {
+      _runMode = RunMode.newRun;
+    }
     _scanResultsAndSubplans();
     notifyListeners();
   }
@@ -121,6 +170,28 @@ class RunSuiteViewModel extends ChangeNotifier {
 
   void toggleDevice(int index, bool value) {
     _devices[index].selected = value;
+    notifyListeners();
+  }
+
+  void setVerifierAction(VerifierAction action) {
+    _verifierAction = action;
+    notifyListeners();
+  }
+
+  void setDutSerial(String? serial) {
+    _dutSerial = serial;
+    if (_tabletSerial == serial) _tabletSerial = null;
+    notifyListeners();
+  }
+
+  void setTabletSerial(String? serial) {
+    _tabletSerial = serial;
+    if (_dutSerial == serial) _dutSerial = null;
+    notifyListeners();
+  }
+
+  void setSelectedVenv(int? index) {
+    _selectedVenvIndex = index;
     notifyListeners();
   }
 
@@ -140,6 +211,7 @@ class RunSuiteViewModel extends ChangeNotifier {
   }
 
   void stopRun() {
+    _cancelled = true;
     _activeProcess?.kill();
     _activeProcess = null;
     _appendOutput('\n[Execução cancelada pelo usuário]\n');
@@ -163,36 +235,79 @@ class RunSuiteViewModel extends ChangeNotifier {
     _availableSubplans = _resultService.scanSubplans(suite.path);
   }
 
+  void setCameraId(String id) {
+    _cameraId = id;
+    notifyListeners();
+  }
+
   Future<void> startRun({
     required String module,
     required String extraArgs,
+    String? scenes,
   }) async {
     final suite = selectedSuite;
-    final selectedSerials = _devices
-        .where((d) => d.selected && d.isAvailable)
-        .map((d) => d.serial)
-        .toList();
+    if (suite == null) return;
 
-    if (suite == null || selectedSerials.isEmpty) return;
+    final List<String> selectedSerials;
+    if (isCtsVerifier) {
+      if (_dutSerial == null) return;
+      selectedSerials = [_dutSerial!];
+    } else {
+      selectedSerials = _devices
+          .where((d) => d.selected && d.isAvailable)
+          .map((d) => d.serial)
+          .toList();
+      if (selectedSerials.isEmpty) return;
+    }
 
     _running = true;
+    _cancelled = false;
     _outputBuffer.clear();
     notifyListeners();
 
     try {
-      _activeProcess = await _runnerService.executeStream(
-        suite: suite,
-        serials: selectedSerials,
-        mode: _runMode,
-        onOutput: _appendOutput,
-        selectedResult: _selectedResult,
-        selectedSubplan: _selectedSubplan,
-        module: module,
-        extraArgs: extraArgs,
-      );
+      if (isCtsVerifier) {
+        switch (_verifierAction) {
+          case VerifierAction.installApks:
+            await _runnerService.installVerifier(
+              suite: suite,
+              serials: selectedSerials,
+              onOutput: _appendOutput,
+              onProcessChanged: (p) => _activeProcess = p,
+              isCancelled: () => _cancelled,
+            );
+          case VerifierAction.cameraIts:
+            if (_tabletSerial == null || selectedVenv == null) break;
+            await _runnerService.runCameraIts(
+              suite: suite,
+              dutSerial: _dutSerial!,
+              tabletSerial: _tabletSerial!,
+              venvPath: selectedVenv!.path,
+              onOutput: _appendOutput,
+              onProcessChanged: (p) => _activeProcess = p,
+              isCancelled: () => _cancelled,
+              scenes: scenes,
+              cameraId: _cameraId,
+            );
+          case VerifierAction.cameraWebcamTest:
+            // TODO: implementar cameraWebcamTest
+            _appendOutput('[AVISO] Camera Webcam Test ainda não implementado.\n');
+        }
+      } else {
+        _activeProcess = await _runnerService.executeStream(
+          suite: suite,
+          serials: selectedSerials,
+          mode: _runMode,
+          onOutput: _appendOutput,
+          selectedResult: _selectedResult,
+          selectedSubplan: _selectedSubplan,
+          module: module,
+          extraArgs: extraArgs,
+        );
 
-      final exitCode = await _activeProcess!.exitCode;
-      _appendOutput('\n[Processo finalizado com código $exitCode]\n');
+        final exitCode = await _activeProcess!.exitCode;
+        _appendOutput('\n[Processo finalizado com código $exitCode]\n');
+      }
     } catch (e) {
       _appendOutput('Erro ao executar: $e\n');
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:nexus_cts/models/suite_entry.dart';
+import 'package:nexus_cts/models/venv_entry.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class SettingsViewModel extends ChangeNotifier {
@@ -12,15 +13,19 @@ class SettingsViewModel extends ChangeNotifier {
   bool _rebootOnFail = false;
   bool get rebootOnFail => _rebootOnFail;
 
+  List<VenvEntry> _venvs = [];
+  List<VenvEntry> get venvs => _venvs;
+
   bool _loading = true;
   bool get loading => _loading;
 
-  static const suiteTypes = ['CTS', 'VTS', 'GTS'];
+  static const suiteTypes = ['CTS', 'VTS', 'GTS', 'CTS Verifier'];
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
     final suites = await SuiteStorage.load();
     _suites = suites;
+    _venvs = await VenvStorage.load();
     _autoRetest = prefs.getBool('auto_retest') ?? true;
     _rebootOnFail = prefs.getBool('reboot_on_fail') ?? false;
     _loading = false;
@@ -74,5 +79,33 @@ class SettingsViewModel extends ChangeNotifier {
     _rebootOnFail = value;
     _saveBool('reboot_on_fail', value);
     notifyListeners();
+  }
+
+  // ── Venvs ──
+
+  Future<void> _saveVenvs() async {
+    await VenvStorage.save(_venvs);
+  }
+
+  void addVenv() {
+    _venvs.add(VenvEntry(name: '', path: ''));
+    notifyListeners();
+  }
+
+  void removeVenv(int index) {
+    _venvs.removeAt(index);
+    _saveVenvs();
+    notifyListeners();
+  }
+
+  void updateVenvName(int index, String value) {
+    _venvs[index].name = value;
+    _saveVenvs();
+    notifyListeners();
+  }
+
+  void updateVenvPath(int index, String value) {
+    _venvs[index].path = value;
+    _saveVenvs();
   }
 }
