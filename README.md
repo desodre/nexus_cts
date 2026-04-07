@@ -146,7 +146,7 @@ O app constrói automaticamente: `{caminho}/tools/{tipo-lowercase}-tradefed`
 - **JDK:** 17+ (para tradefed)
 - **Android SDK:** Platform Tools no `$PATH`
 - **Linux/macOS/Windows:** Para desktop targets
-
+- **Google Tests Suits** As suits não são embarcadas, baixe no site da distribuidora https://source.android.com/docs/compatibility/cts/downloads
 ---
 
 ## 📝 Changelog Recente
