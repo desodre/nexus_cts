@@ -1,92 +1,188 @@
 # nexus_cts — Google Suite Centralizer
 
-Ferramenta de automação e análise projetada para unificar o fluxo de trabalho das suítes de teste oficiais do Android. Transforma a execução fragmentada em um ecossistema inteligente que analisa falhas em tempo real e dispara re-testes baseados em subprocessos específicos.
+Ferramenta de automação e análise Flutter para unificar o fluxo de trabalho das suítes de teste oficiais do Android (CTS/VTS/GTS). Executa testes, coleta resultados em tempo real e oferece dashboard centralizado com gerenciamento dinâmico de suites.
 
-Desenvolvido em **Flutter**, com suporte a Linux, macOS e Windows.
-
----
-
-## Escopo
-
-O nexus_cts atua como camada de orquestração sobre:
-
-| Suite | Descrição |
-|---|---|
-| **CTS** | Compatibility Test Suite — validação de compatibilidade padrão |
-| **VTS** | Vendor Test Suite — testes de interface de hardware e kernel |
-| **GTS** | Google Test Suite — verificação de aplicativos e serviços Google |
-| **CTS Verifier** | Instalação e coleta/análise de resultados manuais |
+**Plataformas:** Linux, macOS, Windows  
+**Arquitetura:** MVVM com Models, Services, ViewModels e Views em Flutter puro  
+**Estado:** Production-ready com streaming ao vivo e persistência
 
 ---
 
-## Funcionalidades Core
+## ✨ Funcionalidades
 
-**Centralizador de Execução**
-Interface unificada para disparar comandos `tradefed` sem alternar entre diretórios ou variáveis de ambiente manualmente.
+### 📊 Dashboard Home
+- Listagem de dispositivos ADB com status (device/offline/unauthorized)
+- Resultados agrupados por suite com cards expansíveis
+- Parse automático de `test_result.xml` com progresso visual
+- Meta-dados: serial, build fingerprint, plano, timestamp
 
-**Analisador de Resultados Dinâmico**
-Processa `test_result.xml` imediatamente após a conclusão de cada suite ou módulo — separando erros de infraestrutura de falhas reais e agrupando por pacote.
+### ⚙️ Configurações Dinâmicas
+- Adicione/remova suites ilimitadas com alias, tipo e caminho customizado
+- Flags globais: `autoRetest`, `rebootOnFail`
+- Persistência automática via SharedPreferences
+- Suporte para CTS, VTS, GTS e tipos customizados
 
-**Smart Trigger (Gatilhos de Subprocessos)**
-Isola módulos que falharam em um plano de teste temporário. Permite condicionais: se o módulo X falhar com o erro Y, reseta `adb`, reinicia o dispositivo e dispara o teste novamente.
+### ⚡ Execução em Tempo Real
+- Streaming de logs durante execução via `Process.start`
+- Output ao vivo com auto-scroll automático
+- Botão stop/cancel com feedback imediato
+- Suporte para workDir e device serial customizados
 
-**Gestão do CTS Verifier**
-Automatiza a instalação do APK correto por nível de API/ABI e importa o report final para o dashboard centralizado.
+### 🔍 Análise de Resultados
+- Parse XML robusto com tratamento de erros
+- Extração: Summary, Build info, Plan, Start time
+- Taxa de aprovação em percentual com indicador visual
+- Scans de subplans `/subplans/*.xml` para retests
+
+### 🚀 Performance
+- I/O e XML parsing em isolate separado (sem bloqueio da UI)
+- Responsive mesmo com diretórios de resultados grandes
+- ScrollController com auto-scroll incremental
 
 ---
 
-## Fluxo de Trabalho
-
-```
-Setup → Execution → Monitoring → Analysis → Action
-```
-
-1. **Setup** — detecta dispositivos via `adb`
-2. **Execution** — usuário seleciona suite (CTS/VTS/GTS)
-3. **Monitoring** — acompanha saída do console e logs do sistema
-4. **Analysis** — analisador lê os resultados ao fim da execução
-5. **Action** — Pass: gera relatório final / Fail: avalia trigger automático de re-teste isolado
-
----
-
-## Estrutura do Projeto
+## 🏗️ Arquitetura
 
 ```
 lib/
-├── core/        # Lógica de interação com Tradefed
-├── parsers/     # Extração de dados (XML/Logs)
-├── triggers/    # Regras para re-testes baseados em resultados
-└── dashboard/   # Interface de visualização dos status
-test/            # Testes de widget e unitários
+├── models/              # SuiteEntry, AdbDevice, TestResult
+├── services/            # AdbService, SuiteResultService, SuiteRunnerService
+├── viewmodels/          # HomeViewModel, SettingsViewModel, RunSuiteViewModel
+├── view/
+│   ├── home/           # HomePage com dashboard
+│   ├── settings/       # Settings para CRUD de suites
+│   ├── run/            # RunSuitePage com output ao vivo
+│   └── widgets/        # AppDrawer reutilizável
+└── main.dart           # MaterialApp entry point
+test/
+└── widget_test.dart    # Testes de widget
 ```
 
----
-
-## Requisitos de Ambiente
-
-- **Flutter SDK** com suporte desktop habilitado
-- **JDK 17+**
-- **Python 3.10+** (scripts de análise e triggers)
-- **Android SDK Platform Tools** no `PATH`
-- Variáveis de ambiente: `$CTS_ROOT`, `$VTS_ROOT`, `$GTS_ROOT`
+**Pattern:** MVVM com ChangeNotifier (sem Provider package)
 
 ---
 
-## Comandos
+## 🚀 Seu Primeiro Uso
+
+1. **Clone e instale dependências:**
+```bash
+git clone <repo>
+cd nexus_cts
+flutter pub get
+```
+
+2. **Abra Configurações e crie uma suite:**
+   - Nome: `CTS-16.1`
+   - Tipo: `CTS`
+   - Caminho: `/path/to/android-cts-16.1_r3`
+   - Salva automaticamente
+
+3. **Conecte um dispositivo ADB:**
+```bash
+adb devices
+```
+
+4. **Acesse Home e clique Atualizar Resultados**
+   - Scanneia `/path/to/.../results/*/test_result.xml`
+   - Exibe resultados com progresso
+
+5. **Execute nova suite:**
+   - Menu → Executar Suíte
+   - Selecione suite, device, modo (newRun/retest/subplan)
+   - Observe logs em tempo real
+   - Clique Stop para cancelar
+
+---
+
+## 🛠️ Comandos
 
 ```bash
-# Dependências
-flutter pub get
-
-# Executar em modo debug
-flutter run
-
-# Testes
-flutter test
-
-# Análise estática
-flutter analyze
-
-# Build desktop (Linux)
-flutter build linux --release
+flutter pub get          # Instalar dependências
+flutter run              # Executar em modo debug
+flutter analyze lib/     # Análise estática
+flutter format lib/      # Formatar código
+flutter test             # Executar testes
+flutter build linux --release  # Build Linux produção
 ```
+
+---
+
+## 📦 Dependências
+
+| Package | Versão | Uso |
+|---------|--------|-----|
+| **flutter** | latest | Framework |
+| **shared_preferences** | ^2.3.4 | Persistência de suites |
+| **xml** | ^6.5.0 | Parse de test_result.xml |
+| **cupertino_icons** | ^1.0.8 | Ícones iOS |
+
+---
+
+## 🔧 Configuração de Suite
+
+Cada suite requer:
+- **Nome (alias):** Identificação livre (ex: `CTS-16.1_r3_pab`)
+- **Tipo:** `CTS`, `VTS`, `GTS` ou customizado
+- **Caminho:** Absoluto para raiz da suite (tem `tools/cts-tradefed`)
+
+O app constrói automaticamente: `{caminho}/tools/{tipo-lowercase}-tradefed`
+
+---
+
+## 📋 Fluxos de Execução
+
+| Modo | Comportamento |
+|------|---------------|
+| **newRun** | Executa suite completa |
+| **retest** | Re-executa apenas módulos que falharam |
+| **subplan** | Executa arquivo XML customizado em `/subplans/` |
+
+---
+
+## 🎯 Requisitos
+
+- **Flutter SDK:** ^3.11.4 com desktop enabled
+- **Dart SDK:** ^3.11.4
+- **JDK:** 17+ (para tradefed)
+- **Android SDK:** Platform Tools no `$PATH`
+- **Linux/macOS/Windows:** Para desktop targets
+
+---
+
+## 📝 Changelog Recente
+
+- ✅ I/O em isolate para UI responsiva
+- ✅ Streaming de logs em tempo real
+- ✅ Suites ilimitadas e dinâmicas
+- ✅ Full MVVM architecture
+- ✅ Parse XML com meta-dados completos
+- ✅ Device listing com status visual
+
+---
+
+## �️ Roadmap — Futuras Adições
+
+| Feature | Prioridade | Status | Descrição |
+|---------|-----------|--------|-----------|
+| 🔄 Retry Automático | Alta | ☐ | Re-execução automática de módulos falhados com backoff exponencial |
+| 📊 Gráfico de Histórico | Alta | ☐ | Timeline de taxa de aprovação ao longo do tempo por suite |
+| 📈 Comparação de Execuções | Alta | ☐ | Diff entre duas execuções (módulos novos/removidos/regressões) |
+| ✅ CTS Verifier Results | Alta | ☐ | Parse e display de relatórios do CTS Verifier (testes manuais) |
+| 📷 Camera ITS Execution | Alta | ☐ | Suporte para executar Camera ITS com automação de testes ópticos |
+| 🔔 Notificações | Média | ☐ | Desktop notifications ao completar testes (sucesso/falha) |
+| 📥 Export de Resultados | Média | ☐ | Gerar PDF/CSV com summary, detalhes por módulo, gráficos |
+| 🌙 Tema Escuro | Média | ☐ | Suporte a modo dark com persistência de preferência |
+| 📱 Multi-Device | Média | ☐ | Executar suite em paralelo em múltiplos dispositivos |
+| 🔗 CI/CD Integration | Média | ☐ | Webhooks ou API REST para integrar com Jenkins/GitHub Actions |
+| 🔍 Filtro Avançado | Baixa | ☐ | Buscar resultados por status, seria, plano, intervalo de tempo |
+| ⏱️ Métricas de Performance | Baixa | ☐ | Tempo de execução por módulo, gargalos identificados |
+| 💾 Cache Inteligente | Baixa | ☐ | Cache de resultados com invalidação baseada em timestamp |
+| 📋 Relatório Customizado | Baixa | ☐ | Editor de templates para exportação de relatórios |
+| 🔐 Suporte a Credenciais | Baixa | ☐ | Autenticação para suites remotas (SSH/local storage seguro) |
+| 🌐 Sincronização de Suites | Baixa | ☐ | Importar suites de arquivo config central ou servidor |
+
+---
+
+## �📄 Licença
+
+Interno — Google Suite Centralizer
