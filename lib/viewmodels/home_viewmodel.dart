@@ -109,7 +109,7 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   List<String> get orderedGroupKeys {
-    const typeOrder = ['CTS', 'VTS', 'GTS', 'CTS Verifier'];
+    const typeOrder = ['CTS', 'CTS-on-GSI', 'VTS', 'GTS', 'GTS-Interactive', 'GTS-Root', 'STS', 'CTS Verifier'];
     return _groupedResults.keys.toList()
       ..sort((a, b) {
         final ta = _groupedResults[a]!.first.suiteType;

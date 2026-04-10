@@ -98,9 +98,11 @@ class RunSuiteViewModel extends ChangeNotifier {
     if (_selectedSuiteIndex == null) return false;
     if (isCtsVerifier) {
       if (_dutSerial == null) return false;
-      if (_verifierAction == VerifierAction.cameraIts ||
-          _verifierAction == VerifierAction.cameraWebcamTest) {
+      if (_verifierAction == VerifierAction.cameraIts) {
         if (_tabletSerial == null) return false;
+        if (_selectedVenvIndex == null) return false;
+      }
+      if (_verifierAction == VerifierAction.cameraWebcamTest) {
         if (_selectedVenvIndex == null) return false;
       }
       return true;
@@ -290,8 +292,15 @@ class RunSuiteViewModel extends ChangeNotifier {
               cameraId: _cameraId,
             );
           case VerifierAction.cameraWebcamTest:
-            // TODO: implementar cameraWebcamTest
-            _appendOutput('[AVISO] Camera Webcam Test ainda não implementado.\n');
+            if (selectedVenv == null) break;
+            await _runnerService.runCameraWebcamTest(
+              suite: suite,
+              dutSerial: _dutSerial!,
+              venvPath: selectedVenv!.path,
+              onOutput: _appendOutput,
+              onProcessChanged: (p) => _activeProcess = p,
+              isCancelled: () => _cancelled,
+            );
         }
       } else {
         _activeProcess = await _runnerService.executeStream(

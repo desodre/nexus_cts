@@ -19,7 +19,7 @@ class SettingsViewModel extends ChangeNotifier {
   bool _loading = true;
   bool get loading => _loading;
 
-  static const suiteTypes = ['CTS', 'VTS', 'GTS', 'CTS Verifier'];
+  static const suiteTypes = ['CTS', 'VTS', 'GTS', 'STS', 'CTS-on-GSI', 'GTS-Interactive', 'GTS-Root', 'CTS Verifier'];
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();
@@ -36,10 +36,10 @@ class SettingsViewModel extends ChangeNotifier {
     await SuiteStorage.save(_suites);
   }
 
-  Future<void> _saveBool(String key, bool value) async {
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(key, value);
-  }
+  // Future<void> _saveBool(String key, bool value) async {
+  //   final prefs = await SharedPreferences.getInstance();
+  //   await prefs.setBool(key, value);
+  // }
 
   void addSuite() {
     _suites.add(SuiteEntry(name: '', type: 'CTS', path: ''));
@@ -67,17 +67,6 @@ class SettingsViewModel extends ChangeNotifier {
   void updateSuitePath(int index, String value) {
     _suites[index].path = value;
     _saveSuites();
-  }
-
-  void setAutoRetest(bool value) {
-    _autoRetest = value;
-    _saveBool('auto_retest', value);
-    notifyListeners();
-  }
-
-  void setRebootOnFail(bool value) {
-    _rebootOnFail = value;
-    _saveBool('reboot_on_fail', value);
     notifyListeners();
   }
 

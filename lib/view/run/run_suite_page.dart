@@ -253,6 +253,7 @@ class _RunSuitePageState extends State<RunSuitePage> {
                 else
                   DropdownButtonFormField<String>(
                     initialValue: _vm.selectedSubplan,
+                    isExpanded: true,
                     decoration: const InputDecoration(
                       labelText: 'Subplan',
                       border: OutlineInputBorder(),
@@ -260,7 +261,7 @@ class _RunSuitePageState extends State<RunSuitePage> {
                     ),
                     items: _vm.availableSubplans
                         .map((s) =>
-                            DropdownMenuItem(value: s, child: Text(s)))
+                            DropdownMenuItem(value: s, child: Text(s, overflow: .clip)))
                         .toList(),
                     onChanged: _vm.setSelectedSubplan,
                   ),

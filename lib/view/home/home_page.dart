@@ -45,15 +45,16 @@ class _HomePageState extends State<HomePage> {
                   children: [
                     const Text(
                       'Dispositivos ADB',
-                      style:
-                          TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const Spacer(),
                     IconButton(
                       icon: const Icon(Icons.refresh),
                       tooltip: 'Atualizar dispositivos',
-                      onPressed:
-                          _vm.loadingDevices ? null : _vm.fetchDevices,
+                      onPressed: _vm.loadingDevices ? null : _vm.fetchDevices,
                     ),
                   ],
                 ),
@@ -68,18 +69,20 @@ class _HomePageState extends State<HomePage> {
                         children: [
                           const Text(
                             'Resultados das Suítes',
-                            style:
-                                TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           const Spacer(),
                           IconButton(
                             icon: const Icon(Icons.refresh),
                             tooltip: 'Atualizar resultados',
-                            onPressed:
-                                _vm.loadingResults ? null : () {
-                                  _vm.fetchResults();
-                                  _vm.fetchItsResults();
-                                },
+                            onPressed: _vm.loadingResults
+                                ? null
+                                : () {
+                                    _vm.fetchResults();
+                                  },
                           ),
                         ],
                       ),
@@ -147,7 +150,31 @@ class _HomePageState extends State<HomePage> {
             _statusIcon(device.status),
             color: _statusColor(device.status),
           ),
-          title: Text(device.serial),
+          title: Text(
+            device.displayModel,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Row(
+            children: [
+              Text(device.serial, style: const TextStyle(fontSize: 12)),
+              if (device.usb != null) ...[
+                const SizedBox(width: 8),
+                Icon(Icons.usb, size: 14, color: Colors.grey.shade600),
+                const SizedBox(width: 2),
+                Text(
+                  device.usb!,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
+              ],
+              if (device.product != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  device.product!,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
+              ],
+            ],
+          ),
           trailing: Chip(
             label: Text(
               device.status,
@@ -179,8 +206,11 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.warning_amber_rounded,
-                  size: 48, color: Colors.orange),
+              const Icon(
+                Icons.warning_amber_rounded,
+                size: 48,
+                color: Colors.orange,
+              ),
               const SizedBox(height: 8),
               const Text(
                 'Nenhum caminho de suíte configurado.',
@@ -225,8 +255,9 @@ class _HomePageState extends State<HomePage> {
     return Column(
       children: orderedKeys.map((suite) {
         final items = _vm.groupedResults[suite]!;
-        final (IconData icon, Color color) =
-            _suiteIconData(items.first.suiteType);
+        final (IconData icon, Color color) = _suiteIconData(
+          items.first.suiteType,
+        );
 
         return Card(
           margin: const EdgeInsets.only(bottom: 8),
@@ -262,12 +293,15 @@ class _HomePageState extends State<HomePage> {
                   const Icon(Icons.folder, size: 20, color: Colors.blueGrey),
                   const SizedBox(width: 8),
                   Expanded(
-                    child: Text(r.folderName,
-                        style: const TextStyle(fontWeight: FontWeight.w600)),
+                    child: Text(
+                      r.folderName,
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
                   ),
-                  Text(_formatDate(r.modified),
-                      style:
-                          const TextStyle(fontSize: 12, color: Colors.grey)),
+                  Text(
+                    _formatDate(r.modified),
+                    style: const TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
                 ],
               ),
               if (s != null) ...[
@@ -278,8 +312,11 @@ class _HomePageState extends State<HomePage> {
                     const SizedBox(width: 12),
                     _infoChip(Icons.cancel, '${s.failed}', Colors.red),
                     const SizedBox(width: 12),
-                    _infoChip(Icons.view_module,
-                        '${s.modulesDone}/${s.modulesTotal}', Colors.blueGrey),
+                    _infoChip(
+                      Icons.view_module,
+                      '${s.modulesDone}/${s.modulesTotal}',
+                      Colors.blueGrey,
+                    ),
                     const Spacer(),
                     Text(
                       '${s.passRate.toStringAsFixed(1)}%',
@@ -289,8 +326,8 @@ class _HomePageState extends State<HomePage> {
                         color: s.passRate >= 90
                             ? Colors.green
                             : s.passRate >= 70
-                                ? Colors.orange
-                                : Colors.red,
+                            ? Colors.orange
+                            : Colors.red,
                       ),
                     ),
                   ],
@@ -302,8 +339,9 @@ class _HomePageState extends State<HomePage> {
                     value: s.total > 0 ? s.passed / s.total : 0,
                     minHeight: 6,
                     backgroundColor: Colors.red.shade100,
-                    valueColor:
-                        const AlwaysStoppedAnimation<Color>(Colors.green),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      Colors.green,
+                    ),
                   ),
                 ),
               ],
@@ -351,9 +389,19 @@ class _HomePageState extends State<HomePage> {
             const Spacer(),
             if (_vm.loadingItsResults)
               const SizedBox(
-                width: 16, height: 16,
+                width: 16,
+                height: 16,
                 child: CircularProgressIndicator(strokeWidth: 2),
               ),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Atualizar resultados',
+              onPressed: _vm.loadingResults
+                  ? null
+                  : () {
+                      _vm.fetchItsResults();
+                    },
+            ),
           ],
         ),
         const SizedBox(height: 8),
@@ -445,8 +493,8 @@ class _HomePageState extends State<HomePage> {
                   final color = t.passed
                       ? Colors.green
                       : t.failed
-                          ? Colors.red
-                          : Colors.grey;
+                      ? Colors.red
+                      : Colors.grey;
                   return GestureDetector(
                     onTap: t.detail != null
                         ? () => _showTestDetailDialog(t)
@@ -457,8 +505,8 @@ class _HomePageState extends State<HomePage> {
                         t.passed
                             ? Icons.check_circle
                             : t.failed
-                                ? Icons.cancel
-                                : Icons.skip_next,
+                            ? Icons.cancel
+                            : Icons.skip_next,
                         size: 16,
                         color: color,
                       ),
@@ -484,8 +532,8 @@ class _HomePageState extends State<HomePage> {
     final resultColor = d.result == 'PASS'
         ? Colors.green
         : d.result == 'FAIL'
-            ? Colors.red
-            : Colors.grey;
+        ? Colors.red
+        : Colors.grey;
 
     String? fmtTime(int? ms) {
       if (ms == null) return null;
@@ -508,9 +556,7 @@ class _HomePageState extends State<HomePage> {
               color: resultColor,
             ),
             const SizedBox(width: 8),
-            Expanded(
-              child: Text(t.testName, overflow: TextOverflow.ellipsis),
-            ),
+            Expanded(child: Text(t.testName, overflow: TextOverflow.ellipsis)),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
@@ -520,9 +566,10 @@ class _HomePageState extends State<HomePage> {
               child: Text(
                 d.result ?? '—',
                 style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: resultColor),
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: resultColor,
+                ),
               ),
             ),
           ],
@@ -539,10 +586,8 @@ class _HomePageState extends State<HomePage> {
                 _kvRow('Test Name', d.testName),
                 _kvRow('Test Class', d.testClass),
                 _kvRow('Signature', d.signature),
-                if (d.beginTime != null)
-                  _kvRow('Início', fmtTime(d.beginTime)),
-                if (d.endTime != null)
-                  _kvRow('Fim', fmtTime(d.endTime)),
+                if (d.beginTime != null) _kvRow('Início', fmtTime(d.beginTime)),
+                if (d.endTime != null) _kvRow('Fim', fmtTime(d.endTime)),
                 if (d.duration != null)
                   _kvRow('Duração', '${d.duration!.inSeconds}s'),
                 const Divider(height: 24),
@@ -556,8 +601,7 @@ class _HomePageState extends State<HomePage> {
                     _summaryBadge('Passed', d.passedCount, Colors.green),
                     _summaryBadge('Failed', d.failedCount, Colors.red),
                     _summaryBadge('Error', d.errorCount, Colors.orange),
-                    _summaryBadge(
-                        'Executed', d.executedCount, Colors.blue),
+                    _summaryBadge('Executed', d.executedCount, Colors.blue),
                     _summaryBadge('Skipped', d.skippedCount, Colors.grey),
                   ],
                 ),
@@ -566,7 +610,9 @@ class _HomePageState extends State<HomePage> {
                 // ── Termination Signal ──
                 if (d.terminationSignal != null) ...[
                   _sectionTitle(
-                      'Termination Signal', Icons.warning_amber_rounded),
+                    'Termination Signal',
+                    Icons.warning_amber_rounded,
+                  ),
                   SelectableText(
                     d.terminationSignal!,
                     style: TextStyle(color: Colors.red.shade300),
@@ -606,8 +652,9 @@ class _HomePageState extends State<HomePage> {
                 // ── Controller Info (Dispositivos) ──
                 if (d.devices.isNotEmpty) ...[
                   _sectionTitle(
-                      'Controller Info (${d.devices.length} dispositivo${d.devices.length > 1 ? 's' : ''})',
-                      Icons.phone_android),
+                    'Controller Info (${d.devices.length} dispositivo${d.devices.length > 1 ? 's' : ''})',
+                    Icons.phone_android,
+                  ),
                   const SizedBox(height: 8),
                   ...d.devices.asMap().entries.map((e) {
                     final idx = e.key;
@@ -627,7 +674,9 @@ class _HomePageState extends State<HomePage> {
                           Text(
                             '$label — ${dev.serial ?? "N/A"}',
                             style: const TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 14),
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
                           ),
                           const SizedBox(height: 6),
                           _kvRow('Model', dev.model),
@@ -664,9 +713,10 @@ class _HomePageState extends State<HomePage> {
         children: [
           Icon(icon, size: 18, color: Colors.blueAccent),
           const SizedBox(width: 6),
-          Text(title,
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold, fontSize: 14)),
+          Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+          ),
         ],
       ),
     );
@@ -681,13 +731,13 @@ class _HomePageState extends State<HomePage> {
         children: [
           SizedBox(
             width: 130,
-            child: Text('$key:',
-                style: TextStyle(
-                    color: Colors.grey.shade400, fontSize: 13)),
+            child: Text(
+              '$key:',
+              style: TextStyle(color: Colors.grey.shade400, fontSize: 13),
+            ),
           ),
           Expanded(
-            child: SelectableText(value,
-                style: const TextStyle(fontSize: 13)),
+            child: SelectableText(value, style: const TextStyle(fontSize: 13)),
           ),
         ],
       ),
@@ -704,9 +754,14 @@ class _HomePageState extends State<HomePage> {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Text('${count ?? 0}',
-              style: TextStyle(
-                  fontWeight: FontWeight.bold, color: color, fontSize: 16)),
+          Text(
+            '${count ?? 0}',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: color,
+              fontSize: 16,
+            ),
+          ),
           const SizedBox(width: 4),
           Text(label, style: TextStyle(color: color, fontSize: 12)),
         ],
@@ -732,9 +787,11 @@ class _HomePageState extends State<HomePage> {
         Icon(icon, size: 14, color: Colors.grey),
         const SizedBox(width: 4),
         Flexible(
-          child: Text(text,
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
-              overflow: TextOverflow.ellipsis),
+          child: Text(
+            text,
+            style: const TextStyle(fontSize: 11, color: Colors.grey),
+            overflow: TextOverflow.ellipsis,
+          ),
         ),
       ],
     );
@@ -761,8 +818,12 @@ class _HomePageState extends State<HomePage> {
   (IconData, Color) _suiteIconData(String suite) {
     return switch (suite) {
       'CTS' => (Icons.verified, Colors.blue),
+      'CTS-on-GSI' => (Icons.verified_user, Colors.indigo),
       'VTS' => (Icons.memory, Colors.deepPurple),
       'GTS' => (Icons.play_circle, Colors.teal),
+      'GTS-Interactive' => (Icons.touch_app, Colors.cyan),
+      'GTS-Root' => (Icons.admin_panel_settings, Colors.deepOrange),
+      'STS' => (Icons.security, Colors.red),
       'CTS Verifier' => (Icons.checklist, Colors.orange),
       _ => (Icons.science, Colors.grey),
     };
