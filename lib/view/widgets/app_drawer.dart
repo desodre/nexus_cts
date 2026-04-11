@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:nexus_cts/view/device_properties/device_properties_page.dart';
 import 'package:nexus_cts/view/home/home_page.dart';
 import 'package:nexus_cts/view/run/run_suite_page.dart';
 import 'package:nexus_cts/view/settings/settings_page.dart';
@@ -55,6 +56,15 @@ class AppDrawer extends StatelessWidget {
               Navigator.of(
                 context,
               ).push(MaterialPageRoute(builder: (_) => const RunSuitePage()));
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.perm_device_information),
+            title: const Text('Device Properties'),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const DevicePropertiesPage()),
+              );
             },
           ),
           ListTile(

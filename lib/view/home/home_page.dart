@@ -33,7 +33,7 @@ class _HomePageState extends State<HomePage> {
       listenable: _vm,
       builder: (context, _) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Nexus CTS Home Page')),
+          appBar: AppBar(title: const Text('Nexus CTS Home Page', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500))),
           drawer: const AppDrawer(),
           body: Padding(
             padding: const EdgeInsets.all(16),
