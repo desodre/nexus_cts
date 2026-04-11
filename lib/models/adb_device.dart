@@ -21,6 +21,5 @@ class AdbDevice {
 
   bool get isAvailable => status == 'device';
 
-  String get displayModel =>
-      model?.replaceAll('_', ' ') ?? serial;
+  String get displayModel => model?.replaceAll('_', ' ') ?? serial;
 }

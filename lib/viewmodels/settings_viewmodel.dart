@@ -19,7 +19,16 @@ class SettingsViewModel extends ChangeNotifier {
   bool _loading = true;
   bool get loading => _loading;
 
-  static const suiteTypes = ['CTS', 'VTS', 'GTS', 'STS', 'CTS-on-GSI', 'GTS-Interactive', 'GTS-Root', 'CTS Verifier'];
+  static const suiteTypes = [
+    'CTS',
+    'VTS',
+    'GTS',
+    'STS',
+    'CTS-on-GSI',
+    'GTS-Interactive',
+    'GTS-Root',
+    'CTS Verifier',
+  ];
 
   Future<void> loadSettings() async {
     final prefs = await SharedPreferences.getInstance();

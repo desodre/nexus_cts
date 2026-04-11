@@ -42,15 +42,17 @@ class AdbService {
         }
       }
 
-      devices.add(AdbDevice(
-        serial: serial,
-        status: status,
-        usb: usb,
-        product: product,
-        model: model,
-        device: device,
-        transportId: transportId,
-      ));
+      devices.add(
+        AdbDevice(
+          serial: serial,
+          status: status,
+          usb: usb,
+          product: product,
+          model: model,
+          device: device,
+          transportId: transportId,
+        ),
+      );
     }
     return devices;
   }

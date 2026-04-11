@@ -31,25 +31,27 @@ class VerifierExecution {
   });
 
   int get total => passed + failed + notExecuted;
-  double get passRate => (passed + failed) > 0 ? (passed / (passed + failed)) * 100 : 0;
+  double get passRate =>
+      (passed + failed) > 0 ? (passed / (passed + failed)) * 100 : 0;
 
   Map<String, dynamic> toMap() => {
-        if (id != null) 'id': id,
-        'xml_path': xmlPath,
-        'device_serial': deviceSerial,
-        'build_fingerprint': buildFingerprint,
-        'suite_plan': suitePlan,
-        'suite_version': suiteVersion,
-        'start_time': startTime,
-        'passed': passed,
-        'failed': failed,
-        'not_executed': notExecuted,
-        'modules_done': modulesDone,
-        'modules_total': modulesTotal,
-        'imported_at': importedAt.toIso8601String(),
-      };
+    if (id != null) 'id': id,
+    'xml_path': xmlPath,
+    'device_serial': deviceSerial,
+    'build_fingerprint': buildFingerprint,
+    'suite_plan': suitePlan,
+    'suite_version': suiteVersion,
+    'start_time': startTime,
+    'passed': passed,
+    'failed': failed,
+    'not_executed': notExecuted,
+    'modules_done': modulesDone,
+    'modules_total': modulesTotal,
+    'imported_at': importedAt.toIso8601String(),
+  };
 
-  factory VerifierExecution.fromMap(Map<String, dynamic> m) => VerifierExecution(
+  factory VerifierExecution.fromMap(Map<String, dynamic> m) =>
+      VerifierExecution(
         id: m['id'] as int?,
         xmlPath: m['xml_path'] as String? ?? '',
         deviceSerial: m['device_serial'] as String?,
@@ -62,7 +64,8 @@ class VerifierExecution {
         notExecuted: m['not_executed'] as int? ?? 0,
         modulesDone: m['modules_done'] as int? ?? 0,
         modulesTotal: m['modules_total'] as int? ?? 0,
-        importedAt: DateTime.tryParse(m['imported_at'] as String? ?? '') ??
+        importedAt:
+            DateTime.tryParse(m['imported_at'] as String? ?? '') ??
             DateTime.now(),
       );
 }
@@ -93,34 +96,33 @@ class VerifierModule {
     this.itsScenes,
   });
 
-  bool get hasCameraItsFailures =>
-      name.contains('CameraITS') && failed > 0;
+  bool get hasCameraItsFailures => name.contains('CameraITS') && failed > 0;
 
   Map<String, dynamic> toMap() => {
-        if (id != null) 'id': id,
-        'execution_id': executionId,
-        'name': name,
-        'abi': abi,
-        'done': done ? 1 : 0,
-        'passed': passed,
-        'failed': failed,
-        'total_tests': totalTests,
-        'runtime_ms': runtimeMs,
-        'its_scenes': itsScenes,
-      };
+    if (id != null) 'id': id,
+    'execution_id': executionId,
+    'name': name,
+    'abi': abi,
+    'done': done ? 1 : 0,
+    'passed': passed,
+    'failed': failed,
+    'total_tests': totalTests,
+    'runtime_ms': runtimeMs,
+    'its_scenes': itsScenes,
+  };
 
   factory VerifierModule.fromMap(Map<String, dynamic> m) => VerifierModule(
-        id: m['id'] as int?,
-        executionId: m['execution_id'] as int? ?? 0,
-        name: m['name'] as String? ?? '',
-        abi: m['abi'] as String? ?? '',
-        done: (m['done'] as int? ?? 0) == 1,
-        passed: m['passed'] as int? ?? 0,
-        failed: m['failed'] as int? ?? 0,
-        totalTests: m['total_tests'] as int? ?? 0,
-        runtimeMs: m['runtime_ms'] as String?,
-        itsScenes: m['its_scenes'] as String?,
-      );
+    id: m['id'] as int?,
+    executionId: m['execution_id'] as int? ?? 0,
+    name: m['name'] as String? ?? '',
+    abi: m['abi'] as String? ?? '',
+    done: (m['done'] as int? ?? 0) == 1,
+    passed: m['passed'] as int? ?? 0,
+    failed: m['failed'] as int? ?? 0,
+    totalTests: m['total_tests'] as int? ?? 0,
+    runtimeMs: m['runtime_ms'] as String?,
+    itsScenes: m['its_scenes'] as String?,
+  );
 }
 
 /// Caso de teste individual de um módulo.
@@ -144,20 +146,20 @@ class VerifierTestCase {
   bool get isFail => result == 'fail';
 
   Map<String, dynamic> toMap() => {
-        if (id != null) 'id': id,
-        'module_id': moduleId,
-        'name': name,
-        'result': result,
-        'message': message,
-        'stacktrace': stacktrace,
-      };
+    if (id != null) 'id': id,
+    'module_id': moduleId,
+    'name': name,
+    'result': result,
+    'message': message,
+    'stacktrace': stacktrace,
+  };
 
   factory VerifierTestCase.fromMap(Map<String, dynamic> m) => VerifierTestCase(
-        id: m['id'] as int?,
-        moduleId: m['module_id'] as int? ?? 0,
-        name: m['name'] as String? ?? '',
-        result: m['result'] as String? ?? 'not_executed',
-        message: m['message'] as String?,
-        stacktrace: m['stacktrace'] as String?,
-      );
+    id: m['id'] as int?,
+    moduleId: m['module_id'] as int? ?? 0,
+    name: m['name'] as String? ?? '',
+    result: m['result'] as String? ?? 'not_executed',
+    message: m['message'] as String?,
+    stacktrace: m['stacktrace'] as String?,
+  );
 }

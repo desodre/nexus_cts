@@ -1,0 +1,129 @@
+import 'package:flutter/material.dart';
+import 'package:nexus_cts/models/adb_device.dart';
+import 'package:nexus_cts/view/widgets/device_status_helpers.dart';
+
+class DeviceListSection extends StatelessWidget {
+  final bool loading;
+  final String? error;
+  final List<AdbDevice> devices;
+  final VoidCallback onRefresh;
+
+  const DeviceListSection({
+    super.key,
+    required this.loading,
+    this.error,
+    required this.devices,
+    required this.onRefresh,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Text(
+              'Dispositivos ADB',
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+            const Spacer(),
+            IconButton(
+              icon: const Icon(Icons.refresh),
+              tooltip: 'Atualizar dispositivos',
+              onPressed: loading ? null : onRefresh,
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(height: 200, child: _buildContent()),
+      ],
+    );
+  }
+
+  Widget _buildContent() {
+    if (loading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (error != null) {
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(Icons.error_outline, size: 48, color: Colors.red),
+            const SizedBox(height: 8),
+            Text(error!, textAlign: TextAlign.center),
+            const SizedBox(height: 12),
+            ElevatedButton.icon(
+              onPressed: onRefresh,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Tentar novamente'),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (devices.isEmpty) {
+      return const Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(Icons.usb_off, size: 48, color: Colors.grey),
+            SizedBox(height: 8),
+            Text('Nenhum dispositivo encontrado'),
+          ],
+        ),
+      );
+    }
+
+    return ListView.separated(
+      itemCount: devices.length,
+      separatorBuilder: (_, _) => const Divider(height: 1),
+      itemBuilder: (context, index) {
+        final device = devices[index];
+        return ListTile(
+          leading: Icon(
+            deviceStatusIcon(device.status),
+            color: deviceStatusColor(device.status),
+          ),
+          title: Text(
+            device.displayModel,
+            style: const TextStyle(fontWeight: FontWeight.w600),
+          ),
+          subtitle: Row(
+            children: [
+              Text(device.serial, style: const TextStyle(fontSize: 12)),
+              if (device.usb != null) ...[
+                const SizedBox(width: 8),
+                Icon(Icons.usb, size: 14, color: Colors.grey.shade600),
+                const SizedBox(width: 2),
+                Text(
+                  device.usb!,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
+              ],
+              if (device.product != null) ...[
+                const SizedBox(width: 8),
+                Text(
+                  device.product!,
+                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
+                ),
+              ],
+            ],
+          ),
+          trailing: Chip(
+            label: Text(
+              device.status,
+              style: TextStyle(
+                color: deviceStatusColor(device.status),
+                fontSize: 12,
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+}

@@ -20,18 +20,20 @@ List<SuiteResult> _fetchResultsSync(List<Map<String, dynamic>> suiteMaps) {
       final testResult = File('${entity.path}/test_result.xml');
       if (testResult.existsSync()) {
         final parsed = _parseTestResult(testResult);
-        results.add(SuiteResult(
-          suiteName: '${suite.name} (${suite.type})',
-          suiteType: suite.type,
-          folderName: entity.path.split('/').last,
-          fullPath: testResult.path,
-          modified: testResult.lastModifiedSync(),
-          summary: parsed.$1,
-          deviceSerial: parsed.$2,
-          buildFingerprint: parsed.$3,
-          suitePlan: parsed.$4,
-          startTime: parsed.$5,
-        ));
+        results.add(
+          SuiteResult(
+            suiteName: '${suite.name} (${suite.type})',
+            suiteType: suite.type,
+            folderName: entity.path.split('/').last,
+            fullPath: testResult.path,
+            modified: testResult.lastModifiedSync(),
+            summary: parsed.$1,
+            deviceSerial: parsed.$2,
+            buildFingerprint: parsed.$3,
+            suitePlan: parsed.$4,
+            startTime: parsed.$5,
+          ),
+        );
       }
     }
   }
@@ -40,8 +42,7 @@ List<SuiteResult> _fetchResultsSync(List<Map<String, dynamic>> suiteMaps) {
   return results;
 }
 
-(TestSummary?, String?, String?, String?, String?) _parseTestResult(
-    File file) {
+(TestSummary?, String?, String?, String?, String?) _parseTestResult(File file) {
   try {
     final content = file.readAsStringSync();
     final doc = XmlDocument.parse(content);
@@ -64,14 +65,15 @@ List<SuiteResult> _fetchResultsSync(List<Map<String, dynamic>> suiteMaps) {
     String? fingerprint;
     final buildEl = root.findElements('Build').firstOrNull;
     if (buildEl != null) {
-      serial = buildEl.getAttribute('device_serial') ??
+      serial =
+          buildEl.getAttribute('device_serial') ??
           buildEl.getAttribute('deviceSerial');
-      fingerprint = buildEl.getAttribute('build_fingerprint') ??
+      fingerprint =
+          buildEl.getAttribute('build_fingerprint') ??
           buildEl.getAttribute('buildFingerprint');
     }
 
-    final plan =
-        root.getAttribute('suite_plan') ?? root.getAttribute('plan');
+    final plan = root.getAttribute('suite_plan') ?? root.getAttribute('plan');
     final startTime =
         root.getAttribute('start_display') ?? root.getAttribute('start');
 

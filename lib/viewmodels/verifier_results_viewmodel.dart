@@ -12,7 +12,7 @@ class VerifierResultsViewModel extends ChangeNotifier {
   final VerifierParserService _parser;
 
   VerifierResultsViewModel({VerifierParserService? parser})
-      : _parser = parser ?? VerifierParserService();
+    : _parser = parser ?? VerifierParserService();
 
   // ── Executions ──
   List<VerifierExecution> _executions = [];
@@ -206,8 +206,7 @@ class VerifierResultsViewModel extends ChangeNotifier {
 
       for (final sceneDir in camDir.listSync().whereType<Directory>()) {
         final sceneName = sceneDir.path.split('/').last;
-        final summaryFile =
-            File('${sceneDir.path}/scene_test_summary.txt');
+        final summaryFile = File('${sceneDir.path}/scene_test_summary.txt');
         if (!summaryFile.existsSync()) continue;
 
         final content = summaryFile.readAsStringSync();

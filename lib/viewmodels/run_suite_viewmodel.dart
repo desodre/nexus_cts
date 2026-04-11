@@ -18,9 +18,9 @@ class RunSuiteViewModel extends ChangeNotifier {
     AdbService? adbService,
     SuiteResultService? resultService,
     SuiteRunnerService? runnerService,
-  })  : _adbService = adbService ?? AdbService(),
-        _resultService = resultService ?? SuiteResultService(),
-        _runnerService = runnerService ?? SuiteRunnerService();
+  }) : _adbService = adbService ?? AdbService(),
+       _resultService = resultService ?? SuiteResultService(),
+       _runnerService = runnerService ?? SuiteRunnerService();
 
   // ── Suites ──
   List<SuiteEntry> _suites = [];

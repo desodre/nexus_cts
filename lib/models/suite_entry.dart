@@ -16,11 +16,7 @@ class SuiteEntry {
   /// Caminho sem barra final (evita caminhos com //).
   String get normalizedPath => path.replaceAll(RegExp(r'/+$'), '');
 
-  Map<String, dynamic> toJson() => {
-        'name': name,
-        'type': type,
-        'path': path,
-      };
+  Map<String, dynamic> toJson() => {'name': name, 'type': type, 'path': path};
 
   factory SuiteEntry.fromJson(Map<String, dynamic> json) {
     return SuiteEntry(

@@ -130,7 +130,13 @@ class SuiteRunnerService {
 
   /// Obtém uma propriedade do dispositivo via adb shell getprop.
   Future<String> _getDeviceProp(String serial, String prop) async {
-    final result = await Process.run('adb', ['-s', serial, 'shell', 'getprop', prop]);
+    final result = await Process.run('adb', [
+      '-s',
+      serial,
+      'shell',
+      'getprop',
+      prop,
+    ]);
     return (result.stdout as String).trim();
   }
 
@@ -144,7 +150,8 @@ class SuiteRunnerService {
   }) async {
     final basePath = suite.normalizedPath;
     final buildName = basePath.split('/').last;
-    final user = Platform.environment['USER'] ??
+    final user =
+        Platform.environment['USER'] ??
         Platform.environment['LOGNAME'] ??
         'user';
 
@@ -159,18 +166,69 @@ class SuiteRunnerService {
       final productId = await _getDeviceProp(serial, 'ro.product.board');
 
       // ── Diretório de resultados ──
-      final resultsDir = '/home/$user/CTSVerifier/Results/'
+      final resultsDir =
+          '/home/$user/CTSVerifier/Results/'
           'CTS-Verifier_${buildName}_${productId}_${carrierId}_$buildId';
       onOutput('Criando diretório de resultados:\n$resultsDir/\n\n');
       await Directory(resultsDir).create(recursive: true);
 
       // ── Setup do dispositivo ──
       final setupCmds = <List<String>>[
-        ['adb', '-s', serial, 'shell', 'settings', 'put', 'system', 'system_locales', 'en-US'],
-        ['adb', '-s', serial, 'shell', 'settings', 'put', 'system', 'screen_brightness_mode', '0'],
-        ['adb', '-s', serial, 'shell', 'settings', 'put', 'system', 'screen_off_timeout', '1800000'],
-        ['adb', '-s', serial, 'shell', 'settings', 'put', 'global', 'stay_on_while_plugged_in', '15'],
-        ['adb', '-s', serial, 'shell', 'settings', 'put', 'global', 'verifier_verify_adb_installs', '0'],
+        [
+          'adb',
+          '-s',
+          serial,
+          'shell',
+          'settings',
+          'put',
+          'system',
+          'system_locales',
+          'en-US',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'shell',
+          'settings',
+          'put',
+          'system',
+          'screen_brightness_mode',
+          '0',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'shell',
+          'settings',
+          'put',
+          'system',
+          'screen_off_timeout',
+          '1800000',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'shell',
+          'settings',
+          'put',
+          'global',
+          'stay_on_while_plugged_in',
+          '15',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'shell',
+          'settings',
+          'put',
+          'global',
+          'verifier_verify_adb_installs',
+          '0',
+        ],
         ['adb', '-s', serial, 'shell', 'locksettings', 'set-disabled', 'true'],
       ];
 
@@ -185,8 +243,22 @@ class SuiteRunnerService {
 
       // ── Push APKs ──
       final pushCmds = <List<String>>[
-        ['adb', '-s', serial, 'push', '$basePath/NotificationBot.apk', '/data/local/tmp'],
-        ['adb', '-s', serial, 'push', '$basePath/CtsVpnFirewallAppNotAlwaysOn.apk', '/data/local/tmp'],
+        [
+          'adb',
+          '-s',
+          serial,
+          'push',
+          '$basePath/NotificationBot.apk',
+          '/data/local/tmp',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'push',
+          '$basePath/CtsVpnFirewallAppNotAlwaysOn.apk',
+          '/data/local/tmp',
+        ],
       ];
 
       for (final cmd in pushCmds) {
@@ -196,28 +268,210 @@ class SuiteRunnerService {
 
       // ── Instalação dos APKs ──
       final installCmds = <List<String>>[
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CrossProfileTestApp.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CtsCarWatchdogCompanionApp.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '-t', '$basePath/CtsDefaultNotesApp.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CtsDeviceControlsApp.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '-t', '$basePath/CtsEmptyDeviceOwner.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CtsForceStopHelper.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CtsPermissionApp.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CtsTileServiceApp.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CtsTtsEngineSelectorTestHelper2.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CtsTtsEngineSelectorTestHelper.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CtsVerifier.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '--instant', '$basePath/CtsVerifierInstantApp.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CtsVerifierUSBCompanion.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CtsVpnFirewallAppApi23.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CtsVpnFirewallAppApi24.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/CtsVpnFirewallAppNotAlwaysOn.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/NotificationBot.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/jetpack-camera-app.apk'],
-        ['adb', '-s', serial, 'install', '-r', '-g', '$basePath/MultiDevice/NfcEmulatorTestApp.apk'],
-        ['adb', '-s', serial, 'install', '--bypass-low-target-sdk-block', '-r', '-g', '$basePath/QSensorTest.apk'],
-        ['adb', '-s', serial, 'install', '--bypass-low-target-sdk-block', '-r', '-g', '$basePath/OpenCV_3.0.0_Manager_3.00_arm64-v8a.apk'],
-        ['adb', '-s', serial, 'install', '--bypass-low-target-sdk-block', '-r', '-g', '$basePath/MIDI BLE Connect_1.1.apk'],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CrossProfileTestApp.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CtsCarWatchdogCompanionApp.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '-t',
+          '$basePath/CtsDefaultNotesApp.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CtsDeviceControlsApp.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '-t',
+          '$basePath/CtsEmptyDeviceOwner.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CtsForceStopHelper.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CtsPermissionApp.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CtsTileServiceApp.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CtsTtsEngineSelectorTestHelper2.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CtsTtsEngineSelectorTestHelper.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CtsVerifier.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '--instant',
+          '$basePath/CtsVerifierInstantApp.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CtsVerifierUSBCompanion.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CtsVpnFirewallAppApi23.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CtsVpnFirewallAppApi24.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/CtsVpnFirewallAppNotAlwaysOn.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/NotificationBot.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/jetpack-camera-app.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '-r',
+          '-g',
+          '$basePath/MultiDevice/NfcEmulatorTestApp.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '--bypass-low-target-sdk-block',
+          '-r',
+          '-g',
+          '$basePath/QSensorTest.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '--bypass-low-target-sdk-block',
+          '-r',
+          '-g',
+          '$basePath/OpenCV_3.0.0_Manager_3.00_arm64-v8a.apk',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'install',
+          '--bypass-low-target-sdk-block',
+          '-r',
+          '-g',
+          '$basePath/MIDI BLE Connect_1.1.apk',
+        ],
       ];
 
       for (final cmd in installCmds) {
@@ -233,12 +487,74 @@ class SuiteRunnerService {
 
       // ── Configurações pós-instalação ──
       final postCmds = <List<String>>[
-        ['adb', '-s', serial, 'shell', 'appops', 'set', '--user', '0', 'com.android.cts.verifier', 'MANAGE_EXTERNAL_STORAGE', '0'],
-        ['adb', '-s', serial, 'shell', 'settings', 'put', 'global', 'hidden_api_policy', '1'],
-        ['adb', '-s', serial, 'shell', 'appops', 'set', 'com.android.cts.verifier', 'MANAGE_EXTERNAL_STORAGE', '0'],
-        ['adb', '-s', serial, 'shell', 'appops', 'set', 'com.android.cts.verifier', 'android:read_device_identifiers', 'allow'],
-        ['adb', '-s', serial, 'shell', 'am', 'compat', 'enable', 'ALLOW_TEST_API_ACCESS', 'com.android.cts.verifier'],
-        ['adb', '-s', serial, 'shell', 'appops', 'set', 'com.android.cts.verifier', 'TURN_SCREEN_ON', '0'],
+        [
+          'adb',
+          '-s',
+          serial,
+          'shell',
+          'appops',
+          'set',
+          '--user',
+          '0',
+          'com.android.cts.verifier',
+          'MANAGE_EXTERNAL_STORAGE',
+          '0',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'shell',
+          'settings',
+          'put',
+          'global',
+          'hidden_api_policy',
+          '1',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'shell',
+          'appops',
+          'set',
+          'com.android.cts.verifier',
+          'MANAGE_EXTERNAL_STORAGE',
+          '0',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'shell',
+          'appops',
+          'set',
+          'com.android.cts.verifier',
+          'android:read_device_identifiers',
+          'allow',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'shell',
+          'am',
+          'compat',
+          'enable',
+          'ALLOW_TEST_API_ACCESS',
+          'com.android.cts.verifier',
+        ],
+        [
+          'adb',
+          '-s',
+          serial,
+          'shell',
+          'appops',
+          'set',
+          'com.android.cts.verifier',
+          'TURN_SCREEN_ON',
+          '0',
+        ],
       ];
 
       for (final cmd in postCmds) {
@@ -271,7 +587,8 @@ class SuiteRunnerService {
     onOutput('\n═══ Camera ITS ═══\n\n');
 
     // ── Montar config.yml ──
-    final configContent = '''
+    final configContent =
+        '''
 # Generated by nexus_cts
 TestBeds:
   - Name: TEST_BED_TABLET_SCENES  # Need 'tablet' in name for tablet scenes
@@ -346,7 +663,8 @@ TestBeds:
       testCmd.write(' scenes=${scenes.trim()}');
     }
 
-    final script = '''
+    final script =
+        '''
 source "$venvNorm/bin/activate"
 cd "$cameraItsDir"
 source build/envsetup.sh
@@ -359,11 +677,10 @@ $testCmd
     if (isCancelled()) return;
 
     try {
-      final process = await Process.start(
-        'bash',
-        ['-c', script],
-        workingDirectory: cameraItsDir,
-      );
+      final process = await Process.start('bash', [
+        '-c',
+        script,
+      ], workingDirectory: cameraItsDir);
       onProcessChanged(process);
 
       process.stdout
@@ -397,7 +714,8 @@ $testCmd
     onOutput('\n═══ Camera Webcam Test ═══\n\n');
 
     // ── Gerar config.yml com serial do DUT ──
-    final configContent = '''
+    final configContent =
+        '''
 # Generated by nexus_cts
 TestBeds:
   - Name: TEST_BED_WEBCAM
@@ -415,7 +733,8 @@ TestBeds:
     if (isCancelled()) return;
 
     // ── Executar run_webcam_test.py ──
-    final script = '''
+    final script =
+        '''
 source "$venvNorm/bin/activate"
 cd "$webcamDir"
 python run_webcam_test.py -c config.yml
@@ -427,11 +746,10 @@ python run_webcam_test.py -c config.yml
     if (isCancelled()) return;
 
     try {
-      final process = await Process.start(
-        'bash',
-        ['-c', script],
-        workingDirectory: webcamDir,
-      );
+      final process = await Process.start('bash', [
+        '-c',
+        script,
+      ], workingDirectory: webcamDir);
       onProcessChanged(process);
 
       process.stdout

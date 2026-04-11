@@ -17,10 +17,7 @@ class VenvEntry {
 
   String get displayLabel => '$name — $path';
 
-  Map<String, dynamic> toJson() => {
-        'name': name,
-        'path': path,
-      };
+  Map<String, dynamic> toJson() => {'name': name, 'path': path};
 
   factory VenvEntry.fromJson(Map<String, dynamic> json) {
     return VenvEntry(

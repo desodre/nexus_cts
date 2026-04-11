@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:nexus_cts/models/suite_entry.dart';
 import 'package:nexus_cts/models/venv_entry.dart';
+import 'package:nexus_cts/view/widgets/suite_icon_helper.dart';
 import 'package:nexus_cts/viewmodels/settings_viewmodel.dart';
 
 class SettingsPage extends StatefulWidget {
@@ -119,17 +120,7 @@ class _SettingsPageState extends State<SettingsPage> {
   }
 
   (IconData, Color) _suiteIconData(String type) {
-    return switch (type) {
-      'CTS' => (Icons.verified, Colors.blue),
-      'CTS-on-GSI' => (Icons.verified_user, Colors.indigo),
-      'VTS' => (Icons.memory, Colors.deepPurple),
-      'GTS' => (Icons.play_circle, Colors.teal),
-      'GTS-Interactive' => (Icons.touch_app, Colors.cyan),
-      'GTS-Root' => (Icons.admin_panel_settings, Colors.deepOrange),
-      'STS' => (Icons.security, Colors.red),
-      'CTS Verifier' => (Icons.checklist, Colors.orange),
-      _ => (Icons.science, Colors.grey),
-    };
+    return suiteIconData(type);
   }
 
   Widget _buildSuiteCard(int index, SuiteEntry suite) {
@@ -187,7 +178,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   decoration: InputDecoration(
                     labelText: 'Tipo da Suíte',
                     border: const OutlineInputBorder(),
-                    ),
+                  ),
                   items: SettingsViewModel.suiteTypes.map((t) {
                     final (IconData tIcon, Color tColor) = _suiteIconData(t);
                     return DropdownMenuItem(

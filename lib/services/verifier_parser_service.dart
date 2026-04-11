@@ -54,13 +54,15 @@ class VerifierParserService {
       if (mod.testCases.isNotEmpty) {
         await VerifierDatabase.insertTestCasesBatch(
           mod.testCases
-              .map((tc) => VerifierTestCase(
-                    moduleId: modId,
-                    name: tc.name,
-                    result: tc.result,
-                    message: tc.message,
-                    stacktrace: tc.stacktrace,
-                  ))
+              .map(
+                (tc) => VerifierTestCase(
+                  moduleId: modId,
+                  name: tc.name,
+                  result: tc.result,
+                  message: tc.message,
+                  stacktrace: tc.stacktrace,
+                ),
+              )
               .toList(),
         );
       }
@@ -166,15 +168,21 @@ _ParsedExecution _parseXml(String xmlContent) {
   String? fingerprint;
   final buildEl = root.findElements('Build').firstOrNull;
   if (buildEl != null) {
-    serial = buildEl.getAttribute('device_serial') ??
+    serial =
+        buildEl.getAttribute('device_serial') ??
         buildEl.getAttribute('deviceSerial') ??
         buildEl.getAttribute('build_serial');
-    fingerprint = buildEl.getAttribute('build_fingerprint') ??
+    fingerprint =
+        buildEl.getAttribute('build_fingerprint') ??
         buildEl.getAttribute('buildFingerprint');
   }
 
   // Summary
-  int passed = 0, failed = 0, notExecuted = 0, modulesDone = 0, modulesTotal = 0;
+  int passed = 0,
+      failed = 0,
+      notExecuted = 0,
+      modulesDone = 0,
+      modulesTotal = 0;
   final summaryEl = root.findElements('Summary').firstOrNull;
   if (summaryEl != null) {
     passed = int.tryParse(summaryEl.getAttribute('pass') ?? '') ?? 0;
@@ -187,8 +195,7 @@ _ParsedExecution _parseXml(String xmlContent) {
         int.tryParse(summaryEl.getAttribute('modules_total') ?? '') ?? 0;
   }
 
-  final plan =
-      root.getAttribute('suite_plan') ?? root.getAttribute('plan');
+  final plan = root.getAttribute('suite_plan') ?? root.getAttribute('plan');
   final version = root.getAttribute('suite_version');
   final startTime =
       root.getAttribute('start_display') ?? root.getAttribute('start');
@@ -202,8 +209,8 @@ _ParsedExecution _parseXml(String xmlContent) {
     for (final testCaseEl in moduleEl.findElements('TestCase')) {
       for (final testEl in testCaseEl.findElements('Test')) {
         final testName = testEl.getAttribute('name') ?? '';
-        final testResult =
-            (testEl.getAttribute('result') ?? 'not_executed').toLowerCase();
+        final testResult = (testEl.getAttribute('result') ?? 'not_executed')
+            .toLowerCase();
 
         final category = _extractCategory(testName);
         final shortName = _stripPrefix(testName);
@@ -222,12 +229,14 @@ _ParsedExecution _parseXml(String xmlContent) {
         }
 
         categoryTests.putIfAbsent(category, () => []);
-        categoryTests[category]!.add(_ParsedTestCase(
-          name: displayName,
-          result: testResult,
-          message: message,
-          stacktrace: stacktrace,
-        ));
+        categoryTests[category]!.add(
+          _ParsedTestCase(
+            name: displayName,
+            result: testResult,
+            message: message,
+            stacktrace: stacktrace,
+          ),
+        );
 
         // Extrair scenes do ITS a partir dos RunHistory subtests
         for (final rh in testEl.findElements('RunHistory')) {
@@ -260,16 +269,18 @@ _ParsedExecution _parseXml(String xmlContent) {
     }
 
     final moduleName = cat[0].toUpperCase() + cat.substring(1);
-    modules.add(_ParsedModule(
-      name: moduleName,
-      abi: '',
-      done: true,
-      passed: catPassed,
-      failed: catFailed,
-      totalTests: tests.length,
-      itsScenes: itsScenes,
-      testCases: tests,
-    ));
+    modules.add(
+      _ParsedModule(
+        name: moduleName,
+        abi: '',
+        done: true,
+        passed: catPassed,
+        failed: catFailed,
+        totalTests: tests.length,
+        itsScenes: itsScenes,
+        testCases: tests,
+      ),
+    );
   }
 
   // Se não houve reagrupamento (XML sem CtsVerifier), usar original
@@ -286,8 +297,8 @@ _ParsedExecution _parseXml(String xmlContent) {
       for (final testCaseEl in moduleEl.findElements('TestCase')) {
         for (final testEl in testCaseEl.findElements('Test')) {
           final testName = testEl.getAttribute('name') ?? '';
-          final testResult =
-              (testEl.getAttribute('result') ?? 'not_executed').toLowerCase();
+          final testResult = (testEl.getAttribute('result') ?? 'not_executed')
+              .toLowerCase();
 
           String? message;
           String? stacktrace;
@@ -302,33 +313,39 @@ _ParsedExecution _parseXml(String xmlContent) {
           if (testResult == 'fail') modFailed++;
           modTotal++;
 
-          testCases.add(_ParsedTestCase(
-            name: testName,
-            result: testResult,
-            message: message,
-            stacktrace: stacktrace,
-          ));
+          testCases.add(
+            _ParsedTestCase(
+              name: testName,
+              result: testResult,
+              message: message,
+              stacktrace: stacktrace,
+            ),
+          );
         }
       }
 
-      modules.add(_ParsedModule(
-        name: modName,
-        abi: modAbi,
-        done: modDone,
-        passed: modPassed,
-        failed: modFailed,
-        totalTests: modTotal,
-        runtimeMs: modRuntime,
-        testCases: testCases,
-      ));
+      modules.add(
+        _ParsedModule(
+          name: modName,
+          abi: modAbi,
+          done: modDone,
+          passed: modPassed,
+          failed: modFailed,
+          totalTests: modTotal,
+          runtimeMs: modRuntime,
+          testCases: testCases,
+        ),
+      );
     }
   }
 
   // Recalcular modulesTotal com base nos módulos virtuais
-  final actualModulesTotal =
-      categoryTests.isNotEmpty ? modules.length : modulesTotal;
-  final actualModulesDone =
-      categoryTests.isNotEmpty ? modules.length : modulesDone;
+  final actualModulesTotal = categoryTests.isNotEmpty
+      ? modules.length
+      : modulesTotal;
+  final actualModulesDone = categoryTests.isNotEmpty
+      ? modules.length
+      : modulesDone;
 
   return _ParsedExecution(
     deviceSerial: serial,

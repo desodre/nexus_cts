@@ -26,8 +26,7 @@ List<CameraItsResult> _scanCameraItsSync(String tmpDir) {
 
       for (final sceneDir in camDir.listSync().whereType<Directory>()) {
         final sceneName = sceneDir.path.split('/').last;
-        final summaryFile =
-            File('${sceneDir.path}/scene_test_summary.txt');
+        final summaryFile = File('${sceneDir.path}/scene_test_summary.txt');
         if (!summaryFile.existsSync()) continue;
 
         final tests = <ItsTestEntry>[];
@@ -47,19 +46,19 @@ List<CameraItsResult> _scanCameraItsSync(String tmpDir) {
           if (parts.length >= 2) {
             final testName = parts.sublist(1).join(' ');
             final detail = detailMap[testName];
-            tests.add(ItsTestEntry(
-              result: parts[0],
-              testName: testName,
-              detail: detail,
-            ));
+            tests.add(
+              ItsTestEntry(
+                result: parts[0],
+                testName: testName,
+                detail: detail,
+              ),
+            );
           }
         }
 
-        scenes.add(ItsSceneResult(
-          scene: sceneName,
-          camera: camera,
-          tests: tests,
-        ));
+        scenes.add(
+          ItsSceneResult(scene: sceneName, camera: camera, tests: tests),
+        );
 
         // Tentar extrair serial/fingerprint do primeiro test_summary.yaml
         if (dutSerial == null) {
@@ -73,14 +72,16 @@ List<CameraItsResult> _scanCameraItsSync(String tmpDir) {
     if (scenes.isEmpty) continue;
 
     final stat = entity.statSync();
-    results.add(CameraItsResult(
-      folderName: name,
-      fullPath: entity.path,
-      modified: stat.modified,
-      dutSerial: dutSerial,
-      buildFingerprint: buildFingerprint,
-      scenes: scenes,
-    ));
+    results.add(
+      CameraItsResult(
+        folderName: name,
+        fullPath: entity.path,
+        modified: stat.modified,
+        dutSerial: dutSerial,
+        buildFingerprint: buildFingerprint,
+        scenes: scenes,
+      ),
+    );
   }
 
   results.sort((a, b) => b.modified.compareTo(a.modified));
@@ -108,8 +109,10 @@ Map<String, ItsTestDetail> _buildTestDetailMap(String scenePath) {
         final content = yamlFile.readAsStringSync();
 
         // Extrair Test Name
-        final nameMatch = RegExp(r'^Test Name:\s*(.+)$', multiLine: true)
-            .firstMatch(content);
+        final nameMatch = RegExp(
+          r'^Test Name:\s*(.+)$',
+          multiLine: true,
+        ).firstMatch(content);
         if (nameMatch == null) continue;
         final rawName = nameMatch.group(1)!.trim();
         final testFileName = '$rawName.py';
@@ -147,22 +150,17 @@ Map<String, ItsTestDetail> _buildTestDetailMap(String scenePath) {
         final signature = _yamlField(content, 'Signature');
 
         // Timestamps
-        final beginTime =
-            int.tryParse(_yamlField(content, 'Begin Time') ?? '');
-        final endTime =
-            int.tryParse(_yamlField(content, 'End Time') ?? '');
+        final beginTime = int.tryParse(_yamlField(content, 'Begin Time') ?? '');
+        final endTime = int.tryParse(_yamlField(content, 'End Time') ?? '');
 
         // Summary counts
-        final errorCount =
-            int.tryParse(_yamlField(content, 'Error') ?? '');
-        final executedCount =
-            int.tryParse(_yamlField(content, 'Executed') ?? '');
-        final failedCount =
-            int.tryParse(_yamlField(content, 'Failed') ?? '');
-        final passedCount =
-            int.tryParse(_yamlField(content, 'Passed') ?? '');
-        final skippedCount =
-            int.tryParse(_yamlField(content, 'Skipped') ?? '');
+        final errorCount = int.tryParse(_yamlField(content, 'Error') ?? '');
+        final executedCount = int.tryParse(
+          _yamlField(content, 'Executed') ?? '',
+        );
+        final failedCount = int.tryParse(_yamlField(content, 'Failed') ?? '');
+        final passedCount = int.tryParse(_yamlField(content, 'Passed') ?? '');
+        final skippedCount = int.tryParse(_yamlField(content, 'Skipped') ?? '');
 
         // Controller Info — dispositivos
         final devices = _parseDevices(content);
@@ -192,8 +190,10 @@ Map<String, ItsTestDetail> _buildTestDetailMap(String scenePath) {
 
 /// Extrai um campo simples do YAML: "FieldName: value".
 String? _yamlField(String content, String field) {
-  final match =
-      RegExp('^$field:\\s*(.+)\$', multiLine: true).firstMatch(content);
+  final match = RegExp(
+    '^$field:\\s*(.+)\$',
+    multiLine: true,
+  ).firstMatch(content);
   if (match == null) return null;
   final val = match.group(1)?.trim().replaceAll(RegExp(r"^'+|'+$"), '');
   return (val == null || val.isEmpty) ? null : val;
@@ -205,24 +205,25 @@ List<ItsDeviceInfo> _parseDevices(String content) {
   final deviceBlocks = content.split(RegExp(r'\n-\s+build_info:'));
   for (var i = 1; i < deviceBlocks.length; i++) {
     final block = deviceBlocks[i];
-    devices.add(ItsDeviceInfo(
-      serial: _blockField(block, 'serial'),
-      model: _blockField(block, 'model'),
-      buildFingerprint: _blockField(block, 'build_fingerprint'),
-      buildId: _blockField(block, 'build_id'),
-      buildProduct: _blockField(block, 'build_product'),
-      buildType: _blockField(block, 'build_type'),
-      sdkVersion: _blockField(block, 'build_version_sdk'),
-      characteristics: _blockField(block, 'build_characteristics'),
-    ));
+    devices.add(
+      ItsDeviceInfo(
+        serial: _blockField(block, 'serial'),
+        model: _blockField(block, 'model'),
+        buildFingerprint: _blockField(block, 'build_fingerprint'),
+        buildId: _blockField(block, 'build_id'),
+        buildProduct: _blockField(block, 'build_product'),
+        buildType: _blockField(block, 'build_type'),
+        sdkVersion: _blockField(block, 'build_version_sdk'),
+        characteristics: _blockField(block, 'build_characteristics'),
+      ),
+    );
   }
   return devices;
 }
 
 /// Extrai campo de um bloco YAML indentado.
 String? _blockField(String block, String field) {
-  final match =
-      RegExp('$field:\\s*(.+)\$', multiLine: true).firstMatch(block);
+  final match = RegExp('$field:\\s*(.+)\$', multiLine: true).firstMatch(block);
   if (match == null) return null;
   final val = match.group(1)?.trim().replaceAll(RegExp(r"^'+|'+$"), '');
   return (val == null || val.isEmpty || val == 'null') ? null : val;
@@ -243,14 +244,17 @@ String? _blockField(String block, String field) {
         String? fingerprint;
 
         // Parse simples — procurar serial e build_fingerprint do DUT (label: dut)
-        final serialMatch =
-            RegExp(r'serial:\s*(\S+)').firstMatch(content);
+        final serialMatch = RegExp(r'serial:\s*(\S+)').firstMatch(content);
         if (serialMatch != null) {
-          serial = serialMatch.group(1)?.replaceAll("'", '').replaceAll('"', '');
+          serial = serialMatch
+              .group(1)
+              ?.replaceAll("'", '')
+              .replaceAll('"', '');
         }
 
-        final fpMatch =
-            RegExp(r'build_fingerprint:\s*(\S+)').firstMatch(content);
+        final fpMatch = RegExp(
+          r'build_fingerprint:\s*(\S+)',
+        ).firstMatch(content);
         if (fpMatch != null) {
           fingerprint = fpMatch.group(1);
         }

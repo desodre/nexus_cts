@@ -16,9 +16,9 @@ class HomeViewModel extends ChangeNotifier {
     AdbService? adbService,
     SuiteResultService? resultService,
     CameraItsResultService? itsResultService,
-  })  : _adbService = adbService ?? AdbService(),
-        _resultService = resultService ?? SuiteResultService(),
-        _itsResultService = itsResultService ?? CameraItsResultService();
+  }) : _adbService = adbService ?? AdbService(),
+       _resultService = resultService ?? SuiteResultService(),
+       _itsResultService = itsResultService ?? CameraItsResultService();
 
   // ── Devices ──
   List<AdbDevice> _devices = [];
@@ -109,17 +109,25 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   List<String> get orderedGroupKeys {
-    const typeOrder = ['CTS', 'CTS-on-GSI', 'VTS', 'GTS', 'GTS-Interactive', 'GTS-Root', 'STS', 'CTS Verifier'];
-    return _groupedResults.keys.toList()
-      ..sort((a, b) {
-        final ta = _groupedResults[a]!.first.suiteType;
-        final tb = _groupedResults[b]!.first.suiteType;
-        final ia = typeOrder.indexOf(ta);
-        final ib = typeOrder.indexOf(tb);
-        final oa = ia == -1 ? typeOrder.length : ia;
-        final ob = ib == -1 ? typeOrder.length : ib;
-        if (oa != ob) return oa.compareTo(ob);
-        return a.compareTo(b);
-      });
+    const typeOrder = [
+      'CTS',
+      'CTS-on-GSI',
+      'VTS',
+      'GTS',
+      'GTS-Interactive',
+      'GTS-Root',
+      'STS',
+      'CTS Verifier',
+    ];
+    return _groupedResults.keys.toList()..sort((a, b) {
+      final ta = _groupedResults[a]!.first.suiteType;
+      final tb = _groupedResults[b]!.first.suiteType;
+      final ia = typeOrder.indexOf(ta);
+      final ib = typeOrder.indexOf(tb);
+      final oa = ia == -1 ? typeOrder.length : ia;
+      final ob = ib == -1 ? typeOrder.length : ib;
+      if (oa != ob) return oa.compareTo(ob);
+      return a.compareTo(b);
+    });
   }
 }

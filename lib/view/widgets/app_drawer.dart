@@ -52,9 +52,9 @@ class AppDrawer extends StatelessWidget {
             leading: const Icon(Icons.rocket_launch),
             title: const Text('Executar Suíte'),
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const RunSuitePage()),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const RunSuitePage()));
             },
           ),
           ListTile(
@@ -62,8 +62,7 @@ class AppDrawer extends StatelessWidget {
             title: const Text('Verifier Results'),
             onTap: () {
               Navigator.of(context).push(
-                MaterialPageRoute(
-                    builder: (_) => const VerifierResultsPage()),
+                MaterialPageRoute(builder: (_) => const VerifierResultsPage()),
               );
             },
           ),
@@ -71,9 +70,9 @@ class AppDrawer extends StatelessWidget {
             leading: const Icon(Icons.settings),
             title: const Text('Configurações'),
             onTap: () {
-              Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const SettingsPage()),
-              );
+              Navigator.of(
+                context,
+              ).push(MaterialPageRoute(builder: (_) => const SettingsPage()));
             },
           ),
           const Spacer(),

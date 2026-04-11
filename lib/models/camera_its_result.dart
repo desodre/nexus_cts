@@ -71,11 +71,7 @@ class ItsTestEntry {
   final String result; // PASS, FAIL, SKIP
   final ItsTestDetail? detail;
 
-  ItsTestEntry({
-    required this.testName,
-    required this.result,
-    this.detail,
-  });
+  ItsTestEntry({required this.testName, required this.result, this.detail});
 
   bool get passed => result == 'PASS';
   bool get failed => result == 'FAIL';
@@ -122,8 +118,7 @@ class CameraItsResult {
   int get totalFailed => scenes.fold(0, (s, r) => s + r.failed);
   int get totalSkipped => scenes.fold(0, (s, r) => s + r.skipped);
   int get totalTests => scenes.fold(0, (s, r) => s + r.total);
-  double get passRate =>
-      totalTests - totalSkipped > 0
-          ? (totalPassed / (totalTests - totalSkipped)) * 100
-          : 0;
+  double get passRate => totalTests - totalSkipped > 0
+      ? (totalPassed / (totalTests - totalSkipped)) * 100
+      : 0;
 }
