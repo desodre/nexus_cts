@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nexus_cts/view/device_properties/device_properties_page.dart';
 import 'package:nexus_cts/view/home/home_page.dart';
 import 'package:nexus_cts/view/run/run_suite_page.dart';
@@ -13,7 +14,7 @@ class AppDrawer extends StatelessWidget {
     return Drawer(
       child: Column(
         children: [
-          const DrawerHeader(
+          DrawerHeader(
             decoration: BoxDecoration(color: Colors.blueGrey),
             child: SizedBox(
               width: double.infinity,
@@ -21,9 +22,12 @@ class AppDrawer extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  Icon(Icons.developer_board, size: 48, color: Colors.white),
-                  SizedBox(height: 8),
-                  Text(
+                  SvgPicture.asset(
+                    'assets/main_logo.svg',
+                    height: 52,
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
                     'Nexus CTS',
                     style: TextStyle(
                       color: Colors.white,
@@ -31,7 +35,7 @@ class AppDrawer extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Text(
+                  const Text(
                     'Google Suite Centralizer',
                     style: TextStyle(color: Colors.white70, fontSize: 13),
                   ),

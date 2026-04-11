@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import 'package:nexus_cts/view/home/widgets/device_list_section.dart';
 import 'package:nexus_cts/view/home/widgets/its_results_section.dart';
 import 'package:nexus_cts/view/home/widgets/results_section.dart';
@@ -33,7 +34,18 @@ class _HomePageState extends State<HomePage> {
       listenable: _vm,
       builder: (context, _) {
         return Scaffold(
-          appBar: AppBar(title: const Text('Nexus CTS Home Page', style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500))),
+          appBar: AppBar(
+            title: Row(
+              children: [
+                SvgPicture.asset('assets/main_logo.svg', height: 28),
+                const SizedBox(width: 10),
+                const Text(
+                  'Nexus CTS Home Page',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
+                ),
+              ],
+            ),
+          ),
           drawer: const AppDrawer(),
           body: Padding(
             padding: const EdgeInsets.all(16),
