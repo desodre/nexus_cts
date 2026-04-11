@@ -187,8 +187,7 @@ class _SettingsPageState extends State<SettingsPage> {
                   decoration: InputDecoration(
                     labelText: 'Tipo da Suíte',
                     border: const OutlineInputBorder(),
-                    prefixIcon: Icon(icon, color: color),
-                  ),
+                    ),
                   items: SettingsViewModel.suiteTypes.map((t) {
                     final (IconData tIcon, Color tColor) = _suiteIconData(t);
                     return DropdownMenuItem(
