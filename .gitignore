@@ -34,3 +34,4 @@ app.*.map.json
 CLAUDE.md
 .github/
 /mocks/
+/mock_data/

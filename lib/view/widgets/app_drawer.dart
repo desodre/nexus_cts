@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nexus_cts/view/home/home_page.dart';
 import 'package:nexus_cts/view/run/run_suite_page.dart';
 import 'package:nexus_cts/view/settings/settings_page.dart';
+import 'package:nexus_cts/view/verifier/verifier_results_page.dart';
 
 class AppDrawer extends StatelessWidget {
   const AppDrawer({super.key});
@@ -53,6 +54,16 @@ class AppDrawer extends StatelessWidget {
             onTap: () {
               Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const RunSuitePage()),
+              );
+            },
+          ),
+          ListTile(
+            leading: const Icon(Icons.verified_user),
+            title: const Text('Verifier Results'),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(
+                    builder: (_) => const VerifierResultsPage()),
               );
             },
           ),
