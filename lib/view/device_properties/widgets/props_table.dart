@@ -165,7 +165,7 @@ class _PropRow extends StatelessWidget {
               child: Text(
                 propKey,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 14,
                   fontFamily: 'monospace',
                   color: Colors.blueGrey[700],
                   fontWeight: FontWeight.w500,
@@ -177,7 +177,7 @@ class _PropRow extends StatelessWidget {
               child: Text(
                 propValue.isEmpty ? '(empty)' : propValue,
                 style: TextStyle(
-                  fontSize: 12,
+                  fontSize: 14,
                   fontFamily: 'monospace',
                   color: propValue.isEmpty ? Colors.grey[400] : null,
                 ),

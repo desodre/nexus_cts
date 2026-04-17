@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-
 import 'package:nexus_cts/models/verifier_result.dart';
 import 'package:nexus_cts/view/verifier/widgets/execution_card.dart';
 import 'package:nexus_cts/view/verifier/widgets/execution_detail.dart';

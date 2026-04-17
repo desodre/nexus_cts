@@ -36,7 +36,7 @@ class DeviceListSection extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 8),
-        SizedBox(height: 200, child: _buildContent()),
+        SizedBox(height: 100, child: _buildContent()),
       ],
     );
   }
