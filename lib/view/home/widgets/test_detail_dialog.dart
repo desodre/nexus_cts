@@ -128,7 +128,7 @@ void showTestDetailDialog(BuildContext context, ItsTestEntry t) {
                     d.stacktrace!,
                     style: const TextStyle(
                       fontFamily: 'monospace',
-                      fontSize: 12,
+                      fontSize: 14,
                       color: Colors.greenAccent,
                     ),
                   ),

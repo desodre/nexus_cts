@@ -3,6 +3,7 @@ import 'package:nexus_cts/models/camera_its_result.dart';
 import 'package:nexus_cts/view/home/widgets/its_scene_tile.dart';
 import 'package:nexus_cts/view/widgets/detail_text.dart';
 import 'package:nexus_cts/view/widgets/format_helpers.dart';
+import 'package:open_dir/open_dir.dart';
 
 class ItsTile extends StatelessWidget {
   final CameraItsResult result;
@@ -15,7 +16,16 @@ class ItsTile extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 8),
       clipBehavior: Clip.antiAlias,
       child: ExpansionTile(
-        leading: const Icon(Icons.camera_alt, color: Colors.orange),
+        leading: IconButton(
+          icon: const Icon(Icons.camera_alt, color: Colors.orange),
+          onPressed: () {
+            //Open a folder from this result in file explorer
+            //This only works on desktop platforms
+            final local = result.fullPath;
+            final openDirPlugin = OpenDir();
+            openDirPlugin.openNativeDir(path: local);
+          },
+        ),
         title: Text(
           result.folderName,
           style: const TextStyle(fontWeight: FontWeight.bold),
