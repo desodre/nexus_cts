@@ -100,9 +100,77 @@ adb devices
 flutter pub get          # Instalar dependências
 flutter run              # Executar em modo debug
 flutter analyze lib/     # Análise estática
-flutter format lib/      # Formatar código
+dart format lib/ test/   # Formatar código
 flutter test             # Executar testes
 flutter build linux --release  # Build Linux produção
+```
+
+---
+
+## 📦 Distribuição (Fastforge)
+
+O projeto usa [Fastforge](https://pub.dev/packages/fastforge) para empacotar e publicar releases em múltiplos formatos.
+
+### Instalação
+
+```bash
+dart pub global activate fastforge
+```
+
+### Build local (dev)
+
+```bash
+# Pacote ZIP (sem dependências extras)
+fastforge package --platform linux --targets zip
+
+# Pacote DEB (requer dpkg-dev)
+fastforge package --platform linux --targets deb
+
+# AppImage (requer locate + appimagetool)
+fastforge package --platform linux --targets appimage
+
+# RPM (requer rpmbuild + patchelf)
+fastforge package --platform linux --targets rpm
+
+# Todos os targets Linux de uma vez
+fastforge release --name dev
+```
+
+Os artefatos são gerados em `dist/`.
+
+### Build por plataforma
+
+| Plataforma | Comando | Pré-requisitos |
+|---|---|---|
+| **Linux DEB** | `fastforge package --platform linux --targets deb` | `sudo apt install dpkg-dev` |
+| **Linux AppImage** | `fastforge package --platform linux --targets appimage` | `sudo apt install locate` + [appimagetool](https://github.com/AppImage/appimagetool) |
+| **Linux RPM** | `fastforge package --platform linux --targets rpm` | `sudo apt install rpm patchelf` |
+| **Linux ZIP** | `fastforge package --platform linux --targets zip` | `p7zip` |
+| **macOS DMG** | `fastforge package --platform macos --targets dmg` | `npm install -g appdmg` (apenas macOS) |
+| **Windows EXE** | `fastforge package --platform windows --targets exe` | [Inno Setup 6](https://jrsoftware.org/isinfo.php) (apenas Windows) |
+
+### Publicar no GitHub Releases
+
+```bash
+export GITHUB_TOKEN="seu_personal_access_token"
+fastforge release --name production
+```
+
+Isso empacota e publica automaticamente em [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases). Configure o token em [Personal Access Tokens](https://github.com/settings/tokens).
+
+### Configuração
+
+A configuração de distribuição fica em `distribute_options.yaml` na raiz do projeto. As configs de empacotamento por plataforma ficam em:
+
+```
+linux/packaging/
+├── deb/make_config.yaml
+├── appimage/make_config.yaml
+└── rpm/make_config.yaml
+macos/packaging/
+└── dmg/make_config.yaml
+windows/packaging/
+└── exe/make_config.yaml
 ```
 
 ---

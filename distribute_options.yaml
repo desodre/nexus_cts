@@ -1,0 +1,97 @@
+variables:
+  GITHUB_TOKEN: ${GITHUB_TOKEN}
+output: dist/
+releases:
+  - name: dev
+    jobs:
+      # Linux DEB
+      - name: release-dev-linux-deb
+        package:
+          platform: linux
+          target: deb
+
+      # Linux AppImage
+      - name: release-dev-linux-appimage
+        package:
+          platform: linux
+          target: appimage
+
+      # Linux RPM
+      - name: release-dev-linux-rpm
+        package:
+          platform: linux
+          target: rpm
+
+      # Linux ZIP
+      - name: release-dev-linux-zip
+        package:
+          platform: linux
+          target: zip
+
+  - name: production
+    jobs:
+      # Linux DEB
+      - name: release-prod-linux-deb
+        package:
+          platform: linux
+          target: deb
+        publish:
+          target: github
+          args:
+            repo-owner: desodre
+            repo-name: nexus_cts
+
+      # Linux AppImage
+      - name: release-prod-linux-appimage
+        package:
+          platform: linux
+          target: appimage
+        publish:
+          target: github
+          args:
+            repo-owner: desodre
+            repo-name: nexus_cts
+
+      # Linux RPM
+      - name: release-prod-linux-rpm
+        package:
+          platform: linux
+          target: rpm
+        publish:
+          target: github
+          args:
+            repo-owner: desodre
+            repo-name: nexus_cts
+
+      # Linux ZIP
+      - name: release-prod-linux-zip
+        package:
+          platform: linux
+          target: zip
+        publish:
+          target: github
+          args:
+            repo-owner: desodre
+            repo-name: nexus_cts
+
+      # macOS DMG
+      - name: release-prod-macos-dmg
+        package:
+          platform: macos
+          target: dmg
+        publish:
+          target: github
+          args:
+            repo-owner: desodre
+            repo-name: nexus_cts
+
+      # Windows EXE
+      - name: release-prod-windows-exe
+        package:
+          platform: windows
+          target: exe
+        publish:
+          target: github
+          args:
+            repo-owner: desodre
+            repo-name: nexus_cts

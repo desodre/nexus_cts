@@ -1,0 +1,26 @@
+icon: assets/main_logo.svg
+summary: Android Compliance Test Suite Centralizer
+group: Application/Development
+vendor: desodre
+packager: desodre
+packagerEmail: desodre@users.noreply.github.com
+license: MIT
+url: https://github.com/desodre/nexus_cts
+
+display_name: Nexus CTS
+
+keywords:
+  - Android
+  - CTS
+  - VTS
+  - GTS
+  - Compliance
+  - Testing
+
+generic_name: Android Compliance Test Suite Centralizer
+
+categories:
+  - Development
+  - Utility
+
+startup_notify: true
