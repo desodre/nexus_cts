@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:nexus_cts/models/camera_its_result.dart';
 import 'package:nexus_cts/view/widgets/format_helpers.dart';
 import 'package:nexus_cts/view/widgets/kv_row.dart';
+import 'package:nexus_cts/view/widgets/result_indicator.dart';
 import 'package:nexus_cts/view/widgets/section_title.dart';
 import 'package:nexus_cts/view/widgets/summary_badge.dart';
 
@@ -24,21 +25,7 @@ void showTestDetailDialog(BuildContext context, ItsTestEntry t) {
           ),
           const SizedBox(width: 8),
           Expanded(child: Text(t.testName, overflow: TextOverflow.ellipsis)),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: resultColor.withValues(alpha: 0.15),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Text(
-              d.result ?? '—',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: resultColor,
-              ),
-            ),
-          ),
+          ResultIndicator(resultColor: resultColor, d: d),
         ],
       ),
       content: SizedBox(

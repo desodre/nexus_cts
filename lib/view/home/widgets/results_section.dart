@@ -117,6 +117,7 @@ class ResultsSection extends StatelessWidget {
           margin: const EdgeInsets.only(bottom: 8),
           clipBehavior: Clip.antiAlias,
           child: ExpansionTile(
+            maintainState: true,
             leading: Icon(icon, color: color),
             title: Text(
               suite,
