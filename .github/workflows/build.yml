@@ -4,6 +4,8 @@ on:
   push:
     tags:
       - 'v*.*.*'
+    branches:
+      - main
   workflow_dispatch:
     inputs:
       publish:
@@ -38,7 +40,7 @@ jobs:
             clang cmake ninja-build pkg-config \
             libgtk-3-dev liblzma-dev libstdc++-12-dev \
             libglib2.0-dev libgdk-pixbuf-2.0-dev \
-            patchelf imagemagick
+            patchelf
 
       - name: Install DEB tools
         if: matrix.target == 'deb'
@@ -65,15 +67,6 @@ jobs:
 
       - name: Flutter pub get
         run: flutter pub get
-
-      - name: Generate PNG icons
-        run: |
-          SVG="assets/main_logo.svg"
-          for SIZE in 16 32 48 64 128 256 512; do
-            mkdir -p "linux/icons/${SIZE}x${SIZE}"
-            magick -background none "$SVG" -resize "${SIZE}x${SIZE}" \
-              "linux/icons/${SIZE}x${SIZE}/nexus_cts.png"
-          done
 
       - name: Package (${{ matrix.target }})
         run: |

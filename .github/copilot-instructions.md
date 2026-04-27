@@ -17,8 +17,23 @@ flutter build linux --release          # Production build
 ### Packaging (Fastforge)
 ```bash
 dart pub global activate fastforge
-fastforge package --platform linux --targets zip,deb,appimage,rpm
-fastforge release --name dev           # All Linux targets to dist/
+export PATH="$PATH:$HOME/.pub-cache/bin"
+
+fastforge package --platform linux --targets zip   # ZIP
+fastforge package --platform linux --targets deb   # DEB (requires dpkg-dev)
+fastforge package --platform linux --targets appimage  # AppImage (requires appimagetool)
+bash scripts/build_rpm.sh                          # RPM — use this, NOT fastforge directly
+```
+
+> **RPM workaround:** fastforge has a bug with `x.y.z+n` version format — generated spec uses relative paths that fail inside rpmbuild's build subdirectory. `scripts/build_rpm.sh` fixes the spec automatically, copies hicolor icons to BUILD/, and calls rpmbuild directly.
+
+### CI/CD (GitHub Actions)
+```bash
+# Trigger automated build + GitHub Release for all Linux targets:
+git tag v0.4.0 && git push origin main --tags
+
+# Manual trigger with optional publish:
+# Actions → Build & Release Linux → Run workflow
 ```
 
 ## Architecture
@@ -59,3 +74,24 @@ lib/
 **Camera ITS:** Generates a `config.yml` in `{suite.path}/CameraITS/`, then runs `python tools/run_all_tests.py` inside the venv via `bash -c "source venv/bin/activate && ..."`. Venv paths are managed as `VenvEntry` objects stored in SharedPreferences.
 
 **Naming:** `snake_case` for files, `PascalCase` for classes. Linting uses `package:flutter_lints/flutter.yaml` (configured in `analysis_options.yaml`).
+
+## Linux Packaging Details
+
+### Icon pipeline
+- Source: `assets/main_logo.svg`
+- PNGs pre-generated at `linux/icons/{16,32,48,64,128,256,512}x{size}/nexus_cts.png`
+- `linux/CMakeLists.txt` copies `linux/icons/256x256/nexus_cts.png` into `data/` in the bundle
+- `linux/runner/my_application.cc` loads `data/nexus_cts.png` at runtime via `gtk_window_set_icon_from_file` (resolves path from `/proc/self/exe`)
+- All `linux/packaging/*/make_config.yaml` reference `linux/icons/512x512/nexus_cts.png`
+
+### RPM spec fix (applied by `scripts/build_rpm.sh`)
+The generated spec's `%install` section is rewritten to:
+- Use `%{_topdir}/BUILD/` absolute paths instead of relative ones
+- Install icons to `/usr/share/icons/hicolor/{size}x{size}/apps/` for all 7 sizes
+- Run `gtk-update-icon-cache` in `%post` and `%postun`
+
+### GitHub Actions workflow (`.github/workflows/build.yml`)
+- **Matrix:** `zip`, `deb`, `appimage`, `rpm` — each in a separate job on `ubuntu-latest`
+- **RPM job** applies the same spec fix inline via Python
+- **`release` job** triggers only on version tags (`v*.*.*`) or manual dispatch with `publish: true`; downloads all 4 artifacts and creates a GitHub Release
+

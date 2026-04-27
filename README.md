@@ -115,63 +115,106 @@ O projeto usa [Fastforge](https://pub.dev/packages/fastforge) para empacotar e p
 
 ```bash
 dart pub global activate fastforge
+# Adicionar ao PATH (se ainda não estiver)
+export PATH="$PATH:$HOME/.pub-cache/bin"
 ```
 
-### Build local (dev)
-
-```bash
-# Pacote ZIP (sem dependências extras)
-fastforge package --platform linux --targets zip
-
-# Pacote DEB (requer dpkg-dev)
-fastforge package --platform linux --targets deb
-
-# AppImage (requer locate + appimagetool)
-fastforge package --platform linux --targets appimage
-
-# RPM (requer rpmbuild + patchelf)
-fastforge package --platform linux --targets rpm
-
-# Todos os targets Linux de uma vez
-fastforge release --name dev
-```
-
-Os artefatos são gerados em `dist/`.
-
-### Build por plataforma
+### Build local por target
 
 | Plataforma | Comando | Pré-requisitos |
 |---|---|---|
+| **Linux ZIP** | `fastforge package --platform linux --targets zip` | `p7zip-full` |
 | **Linux DEB** | `fastforge package --platform linux --targets deb` | `sudo apt install dpkg-dev` |
-| **Linux AppImage** | `fastforge package --platform linux --targets appimage` | `sudo apt install locate` + [appimagetool](https://github.com/AppImage/appimagetool) |
-| **Linux RPM** | `fastforge package --platform linux --targets rpm` | `sudo apt install rpm patchelf` |
-| **Linux ZIP** | `fastforge package --platform linux --targets zip` | `p7zip` |
+| **Linux AppImage** | `fastforge package --platform linux --targets appimage` | `appimagetool` no `$PATH` |
+| **Linux RPM** | `bash scripts/build_rpm.sh` | `sudo apt install rpm patchelf imagemagick` |
 | **macOS DMG** | `fastforge package --platform macos --targets dmg` | `npm install -g appdmg` (apenas macOS) |
 | **Windows EXE** | `fastforge package --platform windows --targets exe` | [Inno Setup 6](https://jrsoftware.org/isinfo.php) (apenas Windows) |
 
-### Publicar no GitHub Releases
+> **⚠️ RPM:** O fastforge possui um bug com versões no formato `x.y.z+n` que gera um spec com caminhos relativos incorretos. Use sempre o script `scripts/build_rpm.sh` em vez do comando fastforge direto — ele corrige o spec automaticamente e instala os ícones no hicolor theme.
+
+Os artefatos são gerados em `dist/`.
+
+### Script RPM (workaround automático)
+
+```bash
+# Gera ícones, corrige spec e executa rpmbuild
+bash scripts/build_rpm.sh
+```
+
+O script realiza automaticamente:
+1. Converte `assets/main_logo.svg` para PNG em 7 tamanhos (16–512px) em `linux/icons/`
+2. Executa `fastforge package --platform linux --targets rpm` (falha esperada no rpmbuild)
+3. Copia os ícones para o diretório `BUILD/` do rpmbuild
+4. Reescreve o `%install` do spec com caminhos absolutos e entradas no hicolor theme
+5. Executa `rpmbuild` diretamente com o spec corrigido
+
+### Ícones
+
+Os PNGs são pré-gerados em `linux/icons/{size}x{size}/nexus_cts.png` (16, 32, 48, 64, 128, 256, 512px).
+O ícone da janela GTK é carregado em runtime a partir de `data/nexus_cts.png` no bundle — configurado em `linux/runner/my_application.cc` e instalado via `linux/CMakeLists.txt`.
+
+### Publicar no GitHub Releases (manual)
 
 ```bash
 export GITHUB_TOKEN="seu_personal_access_token"
 fastforge release --name production
 ```
 
-Isso empacota e publica automaticamente em [GitHub Releases](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases). Configure o token em [Personal Access Tokens](https://github.com/settings/tokens).
-
-### Configuração
-
-A configuração de distribuição fica em `distribute_options.yaml` na raiz do projeto. As configs de empacotamento por plataforma ficam em:
+### Configuração de packaging
 
 ```
 linux/packaging/
 ├── deb/make_config.yaml
 ├── appimage/make_config.yaml
-└── rpm/make_config.yaml
+└── rpm/make_config.yaml        # icon: linux/icons/512x512/nexus_cts.png
 macos/packaging/
 └── dmg/make_config.yaml
 windows/packaging/
 └── exe/make_config.yaml
+distribute_options.yaml         # Targets dev e production com publish no GitHub
 ```
+
+---
+
+## 🤖 CI/CD — GitHub Actions
+
+O workflow `.github/workflows/build.yml` automatiza o build e release para todos os targets Linux.
+
+### Triggers
+
+| Evento | Ação |
+|---|---|
+| `git push --tags v*.*.*` | Build completo + GitHub Release automático |
+| `Actions → Run workflow` | Build manual com opção de publicar |
+
+### Jobs
+
+```
+build-linux (matrix: zip / deb / appimage / rpm)
+└── Roda em paralelo no ubuntu-latest
+    ├── Instala dependências específicas do target
+    ├── Gera PNGs de ícone via ImageMagick
+    ├── Executa fastforge
+    ├── [RPM only] Aplica fix de spec + rpmbuild
+    └── Upload do artefato (retido 7 dias)
+
+release
+└── Só executa em push de tag ou workflow_dispatch com publish=true
+    ├── Baixa todos os 4 artefatos
+    └── Cria GitHub Release com todos os arquivos
+```
+
+### Como fazer uma release
+
+```bash
+# Atualizar version em pubspec.yaml, então:
+git add pubspec.yaml
+git commit -m "chore: bump version to 0.4.0"
+git tag v0.4.0
+git push origin main --tags
+```
+
+O GitHub Actions gera ZIP, DEB, AppImage e RPM e publica automaticamente em Releases.
 
 ---
 
@@ -225,6 +268,10 @@ O app constrói automaticamente: `{caminho}/tools/{tipo-lowercase}-tradefed`
 - ✅ Full MVVM architecture
 - ✅ Parse XML com meta-dados completos
 - ✅ Device listing com status visual
+- ✅ Ícone da janela GTK carregado em runtime via `my_application.cc`
+- ✅ Ícones hicolor completos (16–512px) para DEB/RPM/AppImage
+- ✅ Script `scripts/build_rpm.sh` com fix automático do spec fastforge
+- ✅ CI/CD via GitHub Actions (ZIP, DEB, AppImage, RPM + GitHub Releases)
 
 ---
 
@@ -241,7 +288,7 @@ O app constrói automaticamente: `{caminho}/tools/{tipo-lowercase}-tradefed`
 | 📥 Export de Resultados | Média | ☐ | Gerar PDF/CSV com summary, detalhes por módulo, gráficos |
 | 🌙 Tema Escuro | Média | ☐ | Suporte a modo dark com persistência de preferência |
 | 📱 Multi-Device | Média | ☐ | Executar suite em paralelo em múltiplos dispositivos |
-| 🔗 CI/CD Integration | Média | ☐ | Webhooks ou API REST para integrar com Jenkins/GitHub Actions |
+| 🔗 CI/CD Integration | Média | ✅ | GitHub Actions: build automático de ZIP/DEB/AppImage/RPM + GitHub Releases |
 | 🔍 Filtro Avançado | Baixa | ☐ | Buscar resultados por status, seria, plano, intervalo de tempo |
 | ⏱️ Métricas de Performance | Baixa | ☐ | Tempo de execução por módulo, gargalos identificados |
 | 💾 Cache Inteligente | Baixa | ☐ | Cache de resultados com invalidação baseada em timestamp |

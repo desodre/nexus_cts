@@ -1,4 +1,28 @@
 #!/usr/bin/env bash
+# build_rpm.sh — Gera o pacote RPM com ícones hicolor completos.
+#
+# CONTEXTO: O fastforge possui um bug com versões no formato "x.y.z+n":
+#   o spec gerado usa caminhos relativos (cp -r %{name}/*) no %install,
+#   mas o rpmbuild executa esse bloco dentro de um subdiretório
+#   "nexus_cts-x.y.z+n-build/", não no BUILD/ raiz — causando falha.
+#   Além disso, o fastforge não instala ícones no hicolor theme.
+#
+# O QUE ESTE SCRIPT FAZ:
+#   1. Gera PNGs do SVG em 7 tamanhos (16–512px) em linux/icons/
+#   2. Executa fastforge (falha esperada no rpmbuild — ignorada)
+#   3. Copia os PNGs para BUILD/ dentro do diretório rpmbuild gerado
+#   4. Reescreve o %install do spec com:
+#      - Caminhos absolutos via %{_topdir}/BUILD/
+#      - Instalação em /usr/share/icons/hicolor/{size}x{size}/apps/
+#      - gtk-update-icon-cache em %post/%postun
+#   5. Executa rpmbuild diretamente com o spec corrigido
+#
+# PRÉ-REQUISITOS:
+#   sudo apt install rpm patchelf imagemagick
+#   dart pub global activate fastforge
+#
+# USO:
+#   bash scripts/build_rpm.sh
 
 set -euo pipefail
 
