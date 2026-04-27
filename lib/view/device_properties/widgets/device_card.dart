@@ -1,3 +1,4 @@
+import 'package:adb_utils/adb_utils.dart' as adb_utils;
 import 'package:flutter/material.dart';
 import 'package:nexus_cts/models/adb_device.dart';
 import 'package:nexus_cts/view/widgets/device_status_helpers.dart';
@@ -16,8 +17,9 @@ class DeviceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = deviceStatusColor(device.status);
-    final icon = deviceStatusIcon(device.status);
+    final state = adb_utils.DeviceState.parse(device.status);
+    final color = deviceStatusColor(state);
+    final icon = deviceStatusIcon(state);
 
     return Card(
       elevation: isExpanded ? 2 : 1,

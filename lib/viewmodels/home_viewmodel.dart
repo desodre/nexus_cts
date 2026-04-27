@@ -1,5 +1,5 @@
+import 'package:adb_utils/adb_utils.dart' as adb_utils;
 import 'package:flutter/foundation.dart';
-import 'package:nexus_cts/models/adb_device.dart';
 import 'package:nexus_cts/models/camera_its_result.dart';
 import 'package:nexus_cts/models/suite_entry.dart';
 import 'package:nexus_cts/models/test_result.dart';
@@ -21,8 +21,8 @@ class HomeViewModel extends ChangeNotifier {
        _itsResultService = itsResultService ?? CameraItsResultService();
 
   // ── Devices ──
-  List<AdbDevice> _devices = [];
-  List<AdbDevice> get devices => _devices;
+  List<adb_utils.DeviceInfo> _devices = [];
+  List<adb_utils.DeviceInfo> get devices => _devices;
 
   bool _loadingDevices = false;
   bool get loadingDevices => _loadingDevices;

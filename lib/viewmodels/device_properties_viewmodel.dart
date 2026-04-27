@@ -88,7 +88,14 @@ class DevicePropertiesViewModel extends ChangeNotifier {
     notifyListeners();
 
     try {
-      _devices = await _adbService.fetchDevices();
+      _devices = (await _adbService.fetchDevices()).map((info) => AdbDevice(
+        serial: info.serial,
+        status: info.state.name,
+        product: info.product,
+        model: info.model,
+        device: info.device,
+        transportId: info.transportId?.toString(),
+      )).toList();
     } catch (e) {
       _devicesError = 'Erro ao executar adb: $e';
     }
