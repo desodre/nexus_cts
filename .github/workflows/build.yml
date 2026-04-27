@@ -1,0 +1,205 @@
+name: Build & Release Linux
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: 'Publicar no GitHub Releases'
+        type: boolean
+        default: false
+
+jobs:
+  build-linux:
+    name: Linux (${{ matrix.target }})
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target: [zip, deb, appimage, rpm]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Flutter Linux dependencies
+        run: |
+          sudo apt-get update -q
+          sudo apt-get install -y \
+            clang cmake ninja-build pkg-config \
+            libgtk-3-dev liblzma-dev libstdc++-12-dev \
+            libglib2.0-dev libgdk-pixbuf-2.0-dev \
+            patchelf imagemagick
+
+      - name: Install DEB tools
+        if: matrix.target == 'deb'
+        run: sudo apt-get install -y dpkg-dev
+
+      - name: Install AppImage tools
+        if: matrix.target == 'appimage'
+        run: |
+          sudo apt-get install -y fuse libfuse2 wget
+          wget -q https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage \
+            -O /usr/local/bin/appimagetool
+          chmod +x /usr/local/bin/appimagetool
+
+      - name: Install RPM tools
+        if: matrix.target == 'rpm'
+        run: sudo apt-get install -y rpm patchelf
+
+      - name: Install p7zip (ZIP)
+        if: matrix.target == 'zip'
+        run: sudo apt-get install -y p7zip-full
+
+      - name: Install Fastforge
+        run: dart pub global activate fastforge
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Generate PNG icons
+        run: |
+          SVG="assets/main_logo.svg"
+          for SIZE in 16 32 48 64 128 256 512; do
+            mkdir -p "linux/icons/${SIZE}x${SIZE}"
+            magick -background none "$SVG" -resize "${SIZE}x${SIZE}" \
+              "linux/icons/${SIZE}x${SIZE}/nexus_cts.png"
+          done
+
+      - name: Package (${{ matrix.target }})
+        run: |
+          export PATH="$PATH:$HOME/.pub-cache/bin"
+          fastforge package --platform linux --targets ${{ matrix.target }} || \
+            [[ "${{ matrix.target }}" == "rpm" ]]
+        # O RPM vai falhar no spec — corrigido no passo seguinte
+
+      - name: Fix RPM spec & rebuild
+        if: matrix.target == 'rpm'
+        run: |
+          set -euo pipefail
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr -d '\r')
+          RPM_DIR="dist/${VERSION}/nexus_cts-${VERSION}-linux_rpm/rpmbuild"
+
+          # Copiar ícones para BUILD
+          for SIZE in 16 32 48 64 128 256 512; do
+            mkdir -p "${RPM_DIR}/BUILD/icons/${SIZE}x${SIZE}"
+            cp "linux/icons/${SIZE}x${SIZE}/nexus_cts.png" \
+               "${RPM_DIR}/BUILD/icons/${SIZE}x${SIZE}/nexus_cts.png"
+          done
+          cp "linux/icons/256x256/nexus_cts.png" "${RPM_DIR}/BUILD/nexus_cts.png"
+
+          # Reescrever spec
+          SPEC="${RPM_DIR}/SPECS/nexus_cts.spec"
+          python3 - <<'PYEOF'
+          import re, os
+          spec_path = os.environ["SPEC"]
+          with open(spec_path) as f:
+              content = f.read()
+          install_block = """%install
+          mkdir -p %{buildroot}%{_bindir}
+          mkdir -p %{buildroot}%{_datadir}/%{name}
+          mkdir -p %{buildroot}%{_datadir}/applications
+          mkdir -p %{buildroot}%{_datadir}/metainfo
+          mkdir -p %{buildroot}%{_datadir}/pixmaps
+          for SIZE in 16 32 48 64 128 256 512; do
+            mkdir -p %{buildroot}%{_datadir}/icons/hicolor/${SIZE}x${SIZE}/apps
+            cp %{_topdir}/BUILD/icons/${SIZE}x${SIZE}/%{name}.png \\
+               %{buildroot}%{_datadir}/icons/hicolor/${SIZE}x${SIZE}/apps/%{name}.png
+          done
+          cp -r %{_topdir}/BUILD/%{name}/* %{buildroot}%{_datadir}/%{name}
+          ln -s %{_datadir}/%{name}/%{name} %{buildroot}%{_bindir}/%{name}
+          cp %{_topdir}/BUILD/%{name}.desktop %{buildroot}%{_datadir}/applications
+          cp %{_topdir}/BUILD/icons/256x256/%{name}.png %{buildroot}%{_datadir}/pixmaps/%{name}.png
+          cp %{_topdir}/BUILD/%{name}*.xml %{buildroot}%{_datadir}/metainfo || :
+          update-mime-database %{_datadir}/mime &> /dev/null || :
+
+          %post
+          gtk-update-icon-cache -f -t %{_datadir}/icons/hicolor &> /dev/null || :
+
+          %postun
+          gtk-update-icon-cache -f -t %{_datadir}/icons/hicolor &> /dev/null || :
+          update-mime-database %{_datadir}/mime &> /dev/null || :
+
+          %files
+          %{_bindir}/%{name}
+          %{_datadir}/%{name}
+          %{_datadir}/applications/%{name}.desktop
+          %{_datadir}/metainfo
+          %{_datadir}/icons/hicolor/*/apps/%{name}.png
+          %{_datadir}/pixmaps/%{name}.png"""
+          content = re.sub(r'%install.*', install_block, content, flags=re.DOTALL)
+          with open(spec_path, "w") as f:
+              f.write(content)
+          PYEOF
+
+          cd "$RPM_DIR"
+          rpmbuild --define "_topdir $(pwd)" -bb SPECS/nexus_cts.spec
+
+      - name: Collect artifact
+        id: artifact
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr -d '\r')
+          TARGET="${{ matrix.target }}"
+
+          case "$TARGET" in
+            zip)
+              FILE=$(find dist -name "*.zip" | head -1) ;;
+            deb)
+              FILE=$(find dist -name "*.deb" | head -1) ;;
+            appimage)
+              FILE=$(find dist -name "*.AppImage" | head -1) ;;
+            rpm)
+              FILE=$(find dist -name "*.rpm" | head -1) ;;
+          esac
+
+          echo "path=$FILE" >> "$GITHUB_OUTPUT"
+          echo "name=$(basename "$FILE")" >> "$GITHUB_OUTPUT"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: nexus_cts-linux-${{ matrix.target }}
+          path: ${{ steps.artifact.outputs.path }}
+          retention-days: 7
+
+  release:
+    name: Publish GitHub Release
+    needs: build-linux
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/') || inputs.publish == true
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+          merge-multiple: true
+
+      - name: Get version
+        id: version
+        run: |
+          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr -d '\r')
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name || format('v{0}', steps.version.outputs.value) }}
+          name: "Nexus CTS ${{ steps.version.outputs.value }}"
+          draft: false
+          prerelease: false
+          files: artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
