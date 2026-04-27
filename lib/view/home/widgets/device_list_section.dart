@@ -1,7 +1,6 @@
 import 'package:adb_utils/adb_utils.dart' as adb_utils;
 import 'package:flutter/material.dart';
 import 'package:nexus_cts/view/widgets/device_status_helpers.dart';
-import 'package:separated_column/separated_column.dart';
 
 class DeviceListSection extends StatelessWidget {
   final bool loading;
@@ -79,9 +78,11 @@ class DeviceListSection extends StatelessWidget {
       );
     }
 
-    return SeparatedColumn(
+    return ListView.separated(
       separatorBuilder: (context, index) => const Divider(height: 1),
-      children: devices.map((device) {
+      itemCount: devices.length,
+      itemBuilder: (context, index) {
+        final device = devices[index];
         final state = device.state;
         final displayModel =
             device.model?.replaceAll('_', ' ') ?? device.serial;
@@ -123,7 +124,7 @@ class DeviceListSection extends StatelessWidget {
             ],
           ),
         );
-      }).toList(),
+      }
     );
   }
 }
