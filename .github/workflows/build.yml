@@ -56,7 +56,7 @@ jobs:
 
       - name: Install RPM tools
         if: matrix.target == 'rpm'
-        run: sudo apt-get install -y rpm patchelf
+        run: sudo apt-get install -y rpm patchelf imagemagick
 
       - name: Install p7zip (ZIP)
         if: matrix.target == 'zip'
@@ -71,16 +71,35 @@ jobs:
       - name: Package (${{ matrix.target }})
         run: |
           export PATH="$PATH:$HOME/.pub-cache/bin"
-          fastforge package --platform linux --targets ${{ matrix.target }} || \
-            [[ "${{ matrix.target }}" == "rpm" ]]
-        # O RPM vai falhar no spec — corrigido no passo seguinte
+          
+          # Limpeza preventiva para evitar conflitos de find
+          rm -rf dist
+          
+          if [[ "${{ matrix.target }}" == "rpm" ]]; then
+            # Criar um rpmbuild falso para forçar o fastforge a falhar e NÃO limpar o diretório
+            sudo ln -sf /bin/false /usr/local/bin/rpmbuild
+            fastforge package --platform linux --targets rpm || true
+            sudo rm /usr/local/bin/rpmbuild
+          else
+            fastforge package --platform linux --targets ${{ matrix.target }}
+          fi
 
       - name: Fix RPM spec & rebuild
         if: matrix.target == 'rpm'
         run: |
           set -euo pipefail
-          VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr -d '\r')
-          RPM_DIR="dist/${VERSION}/nexus_cts-${VERSION}-linux_rpm/rpmbuild"
+          
+          echo "Conteúdo do diretório dist (debug):"
+          ls -R dist || echo "Diretório dist não existe ou está vazio"
+
+          # Localizar diretório de build (procura recursivamente por 'rpmbuild')
+          RPM_DIR=$(find dist -type d -name "rpmbuild" | head -1)
+          
+          if [[ -z "$RPM_DIR" ]]; then
+            echo "ERRO: Diretório rpmbuild não encontrado em 'dist'"
+            exit 1
+          fi
+          echo "Usando RPM_DIR: $RPM_DIR"
 
           # Copiar ícones para BUILD
           for SIZE in 16 32 48 64 128 256 512; do
@@ -97,6 +116,7 @@ jobs:
           spec_path = os.environ["SPEC"]
           with open(spec_path) as f:
               content = f.read()
+          
           install_block = """%install
           mkdir -p %{buildroot}%{_bindir}
           mkdir -p %{buildroot}%{_datadir}/%{name}
@@ -108,11 +128,13 @@ jobs:
             cp %{_topdir}/BUILD/icons/${SIZE}x${SIZE}/%{name}.png \\
                %{buildroot}%{_datadir}/icons/hicolor/${SIZE}x${SIZE}/apps/%{name}.png
           done
-          cp -r %{_topdir}/BUILD/%{name}/* %{buildroot}%{_datadir}/%{name}
+          # Copiar arquivos do bundle (procura diretório que contenha o binário)
+          BUNDLE_DIR=$(find %{_topdir}/BUILD -maxdepth 2 -type d -name "%{name}*" | head -1)
+          cp -r ${BUNDLE_DIR}/* %{buildroot}%{_datadir}/%{name}
           ln -s %{_datadir}/%{name}/%{name} %{buildroot}%{_bindir}/%{name}
-          cp %{_topdir}/BUILD/%{name}.desktop %{buildroot}%{_datadir}/applications
+          cp %{_topdir}/BUILD/*.desktop %{buildroot}%{_datadir}/applications || cp ${BUNDLE_DIR}/*.desktop %{buildroot}%{_datadir}/applications || :
           cp %{_topdir}/BUILD/icons/256x256/%{name}.png %{buildroot}%{_datadir}/pixmaps/%{name}.png
-          cp %{_topdir}/BUILD/%{name}*.xml %{buildroot}%{_datadir}/metainfo || :
+          cp %{_topdir}/BUILD/%{name}*.xml %{buildroot}%{_datadir}/metainfo || cp ${BUNDLE_DIR}/*.xml %{buildroot}%{_datadir}/metainfo || :
           update-mime-database %{_datadir}/mime &> /dev/null || :
 
           %post
@@ -129,6 +151,8 @@ jobs:
           %{_datadir}/metainfo
           %{_datadir}/icons/hicolor/*/apps/%{name}.png
           %{_datadir}/pixmaps/%{name}.png"""
+          
+          # Substituir desde %install ate o fim do arquivo
           content = re.sub(r'%install.*', install_block, content, flags=re.DOTALL)
           with open(spec_path, "w") as f:
               f.write(content)

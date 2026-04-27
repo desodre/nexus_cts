@@ -42,16 +42,28 @@ echo "  ✓ Ícones gerados em linux/icons/"
 echo "→ Executando fastforge..."
 export PATH="$PATH:$HOME/.pub-cache/bin"
 cd "$PROJECT_ROOT"
+
+# Hack: forçar falha no rpmbuild para evitar limpeza dos arquivos temporários
+# Criamos um link simbólico no PATH que precede o rpmbuild real
+mkdir -p "$PROJECT_ROOT/.tmp_bin"
+ln -sf /bin/false "$PROJECT_ROOT/.tmp_bin/rpmbuild"
+OLD_PATH="$PATH"
+export PATH="$PROJECT_ROOT/.tmp_bin:$PATH"
+
 fastforge package --platform linux --targets rpm || true
-# fastforge vai falhar no rpmbuild — corrigido abaixo
+
+export PATH="$OLD_PATH"
+rm -rf "$PROJECT_ROOT/.tmp_bin"
 
 VERSION=$(grep '^version:' pubspec.yaml | awk '{print $2}' | tr -d '\r')
-RPM_DIR="$PROJECT_ROOT/dist/$VERSION/nexus_cts-${VERSION}-linux_rpm/rpmbuild"
+RPM_DIR=$(find "$PROJECT_ROOT/dist" -type d -name "rpmbuild" | head -1)
 
-if [[ ! -d "$RPM_DIR" ]]; then
-  echo "ERRO: Diretório rpmbuild não encontrado em dist/$VERSION/"
+if [[ -z "$RPM_DIR" ]]; then
+  echo "ERRO: Diretório rpmbuild não encontrado em dist/"
   exit 1
 fi
+
+echo "→ Usando RPM_DIR: $RPM_DIR"
 
 echo "→ Corrigindo spec e copiando ícones para BUILD..."
 
@@ -81,11 +93,13 @@ for SIZE in 16 32 48 64 128 256 512; do
   cp %{_topdir}/BUILD/icons/${SIZE}x${SIZE}/%{name}.png \\
      %{buildroot}%{_datadir}/icons/hicolor/${SIZE}x${SIZE}/apps/%{name}.png
 done
-cp -r %{_topdir}/BUILD/%{name}/* %{buildroot}%{_datadir}/%{name}
+# Copiar arquivos do bundle (procura diretório que contenha o binário)
+BUNDLE_DIR=$(find %{_topdir}/BUILD -maxdepth 2 -type d -name "%{name}*" | head -1)
+cp -r ${BUNDLE_DIR}/* %{buildroot}%{_datadir}/%{name}
 ln -s %{_datadir}/%{name}/%{name} %{buildroot}%{_bindir}/%{name}
-cp %{_topdir}/BUILD/%{name}.desktop %{buildroot}%{_datadir}/applications
+cp %{_topdir}/BUILD/*.desktop %{buildroot}%{_datadir}/applications || cp ${BUNDLE_DIR}/*.desktop %{buildroot}%{_datadir}/applications || :
 cp %{_topdir}/BUILD/icons/256x256/%{name}.png %{buildroot}%{_datadir}/pixmaps/%{name}.png
-cp %{_topdir}/BUILD/%{name}*.xml %{buildroot}%{_datadir}/metainfo || :
+cp %{_topdir}/BUILD/%{name}*.xml %{buildroot}%{_datadir}/metainfo || cp ${BUNDLE_DIR}/*.xml %{buildroot}%{_datadir}/metainfo || :
 update-mime-database %{_datadir}/mime &> /dev/null || :
 
 %post
