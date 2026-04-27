@@ -1,11 +1,12 @@
+import 'package:adb_utils/adb_utils.dart' as adb_utils;
 import 'package:flutter/material.dart';
-import 'package:nexus_cts/models/adb_device.dart';
 import 'package:nexus_cts/view/widgets/device_status_helpers.dart';
+import 'package:separated_column/separated_column.dart';
 
 class DeviceListSection extends StatelessWidget {
   final bool loading;
   final String? error;
-  final List<AdbDevice> devices;
+  final List<adb_utils.DeviceInfo> devices;
   final VoidCallback onRefresh;
 
   const DeviceListSection({
@@ -78,32 +79,24 @@ class DeviceListSection extends StatelessWidget {
       );
     }
 
-    return ListView.separated(
-      itemCount: devices.length,
-      separatorBuilder: (_, _) => const Divider(height: 1),
-      itemBuilder: (context, index) {
-        final device = devices[index];
+    return SeparatedColumn(
+      separatorBuilder: (context, index) => const Divider(height: 1),
+      children: devices.map((device) {
+        final state = device.state;
+        final displayModel =
+            device.model?.replaceAll('_', ' ') ?? device.serial;
         return ListTile(
           leading: Icon(
-            deviceStatusIcon(device.status),
-            color: deviceStatusColor(device.status),
+            deviceStatusIcon(state),
+            color: deviceStatusColor(state),
           ),
           title: Text(
-            device.displayModel,
+            displayModel,
             style: const TextStyle(fontWeight: FontWeight.w600),
           ),
           subtitle: Row(
             children: [
               Text(device.serial, style: const TextStyle(fontSize: 12)),
-              if (device.usb != null) ...[
-                const SizedBox(width: 8),
-                Icon(Icons.usb, size: 14, color: Colors.grey.shade600),
-                const SizedBox(width: 2),
-                Text(
-                  device.usb!,
-                  style: TextStyle(fontSize: 11, color: Colors.grey.shade600),
-                ),
-              ],
               if (device.product != null) ...[
                 const SizedBox(width: 8),
                 Text(
@@ -113,17 +106,42 @@ class DeviceListSection extends StatelessWidget {
               ],
             ],
           ),
-          trailing: Chip(
-            label: Text(
-              device.status,
-              style: TextStyle(
-                color: deviceStatusColor(device.status),
-                fontSize: 12,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              DevicePropIndicator(
+                label: state.name,
+                color: deviceStatusColor(state),
               ),
-            ),
+              if (device.device != null) ...[
+                const SizedBox(width: 8),
+                DevicePropIndicator(
+                  label: device.device!,
+                  color: deviceStatusColor(state),
+                ),
+              ],
+            ],
           ),
         );
-      },
+      }).toList(),
+    );
+  }
+}
+
+class DevicePropIndicator extends StatelessWidget {
+  const DevicePropIndicator({
+    super.key,
+    required this.label,
+    required this.color,
+  });
+
+  final String label;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return Chip(
+      label: Text(label, style: TextStyle(color: color, fontSize: 12)),
     );
   }
 }

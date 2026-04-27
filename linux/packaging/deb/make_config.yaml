@@ -1,0 +1,26 @@
+display_name: Nexus CTS
+package_name: nexus-cts
+maintainer:
+  name: desodre
+  email: desodre@users.noreply.github.com
+priority: optional
+section: x11
+installed_size: 8192
+essential: false
+icon: linux/icons/512x512/nexus_cts.png
+
+keywords:
+  - Android
+  - CTS
+  - VTS
+  - GTS
+  - Compliance
+  - Testing
+
+generic_name: Android Compliance Test Suite Centralizer
+
+categories:
+  - Development
+  - Utility
+
+startup_notify: true

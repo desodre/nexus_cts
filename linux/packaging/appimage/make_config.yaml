@@ -1,0 +1,21 @@
+display_name: Nexus CTS
+
+icon: linux/icons/512x512/nexus_cts.png
+
+keywords:
+  - Android
+  - CTS
+  - VTS
+  - GTS
+  - Compliance
+  - Testing
+
+generic_name: Android Compliance Test Suite Centralizer
+
+categories:
+  - Development
+  - Utility
+
+startup_notify: true
+
+include: []

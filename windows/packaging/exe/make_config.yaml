@@ -1,0 +1,9 @@
+app_id: D3F5A8E2-7C91-4B6A-A2E0-9F8D1C3E5B7A
+publisher: desodre
+publisher_url: https://github.com/desodre/nexus_cts
+display_name: Nexus CTS
+create_desktop_icon: true
+setup_icon_file: windows\runner\resources\app_icon.ico
+locales:
+  - en
+  - pt
