@@ -91,7 +91,7 @@ jobs:
           cp "linux/icons/256x256/nexus_cts.png" "${RPM_DIR}/BUILD/nexus_cts.png"
 
           # Reescrever spec
-          SPEC="${RPM_DIR}/SPECS/nexus_cts.spec"
+          export SPEC="${RPM_DIR}/SPECS/nexus_cts.spec"
           python3 - <<'PYEOF'
           import re, os
           spec_path = os.environ["SPEC"]
