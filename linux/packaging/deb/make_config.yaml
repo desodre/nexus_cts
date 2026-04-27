@@ -7,7 +7,7 @@ priority: optional
 section: x11
 installed_size: 8192
 essential: false
-icon: assets/main_logo.svg
+icon: linux/icons/512x512/nexus_cts.png
 
 keywords:
   - Android

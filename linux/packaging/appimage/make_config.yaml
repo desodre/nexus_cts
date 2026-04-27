@@ -1,6 +1,6 @@
 display_name: Nexus CTS
 
-icon: assets/main_logo.svg
+icon: linux/icons/512x512/nexus_cts.png
 
 keywords:
   - Android
