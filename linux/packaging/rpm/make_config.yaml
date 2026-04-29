@@ -24,3 +24,4 @@ categories:
   - Utility
 
 startup_notify: true
+startup_wm_class: io.github.desodre.nexus_cts

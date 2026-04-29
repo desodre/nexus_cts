@@ -15,10 +15,14 @@ The project relies on standard Flutter tooling (SDK ^3.11.4). Platform Tools (AD
 *   **Tests:** `flutter test`
 *   **Static Analysis:** `flutter analyze lib/`
 *   **Formatting:** `dart format lib/ test/`
-*   **Build (Linux):** `flutter build linux --release`
+
+### Build (Linux)
+Para garantir compatibilidade com Ubuntu 20.04+ (evitar erros de `libc6`):
+*   **Via Docker (Recomendado):** `docker-compose up --build`
+*   **Manual (Native):** `flutter build linux --release` (Requer Ubuntu 20.04 ou inferior para retrocompatibilidade).
 
 ### Packaging (Linux)
-The project uses `fastforge` for packaging, with a specific workaround for RPM:
+O projeto usa `fastforge` para packaging. O build via Docker já executa o packaging automaticamente.
 *   **ZIP/DEB/AppImage:** `fastforge package --platform linux --targets <target>`
 *   **RPM:** Use `bash scripts/build_rpm.sh` (fixes path issues in fastforge-generated spec files).
 *   **Icons:** PNGs are pre-generated in `linux/icons/`. `linux/runner/my_application.cc` loads the icon from the bundle's `data/` directory at runtime.
