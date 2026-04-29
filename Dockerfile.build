@@ -1,0 +1,50 @@
+FROM ubuntu:20.04
+
+# Previne prompts interativos
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Instala dependências do sistema, JDK, ADB e ferramentas de empacotamento
+RUN apt-get update && apt-get install -y \
+    curl \
+    git \
+    unzip \
+    xz-utils \
+    zip \
+    libglu1-mesa-dev \
+    libgtk-3-dev \
+    libblkid-dev \
+    liblzma-dev \
+    libgcrypt20-dev \
+    pkg-config \
+    cmake \
+    ninja-build \
+    clang \
+    openjdk-17-jdk \
+    adb \
+    # Ferramentas para o fastforge (DEB, RPM, AppImage)
+    dpkg-dev \
+    fakeroot \
+    rpm \
+    binutils \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instala o Flutter SDK
+ARG FLUTTER_VERSION=3.41.6
+RUN git clone https://github.com/flutter/flutter.git -b ${FLUTTER_VERSION} /opt/flutter
+ENV PATH="/opt/flutter/bin:/opt/flutter/bin/cache/dart-sdk/bin:${PATH}"
+
+# Corrige permissões do Git para o Flutter
+RUN git config --global --add safe.directory /opt/flutter
+
+# Configura o Flutter
+RUN flutter config --enable-linux-desktop
+
+
+# Configura o Pub Cache global e instala o fastforge
+ENV PUB_CACHE=/opt/pub-cache
+ENV PATH="${PATH}:${PUB_CACHE}/bin"
+RUN flutter pub global activate fastforge
+
+WORKDIR /app
+
+CMD ["bash"]

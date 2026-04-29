@@ -1,0 +1,16 @@
+services:
+  builder:
+    build:
+      context: .
+      dockerfile: Dockerfile.build
+    volumes:
+      - .:/app
+    user: "${UID:-1000}:${GID:-1000}"
+    command: >
+      bash -c "
+      git config --global --add safe.directory /app &&
+      flutter clean &&
+      flutter pub get &&
+      flutter build linux --release &&
+      fastforge package --platform linux --targets deb,appimage
+      "
